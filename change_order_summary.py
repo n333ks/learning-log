@@ -22,3 +22,11 @@ for part in data['parts']:
 print("=== NON-NEGOTIABLES ===")
 for rule in data['non_negotiables']:
     print(f"  - {rule['rule']}")
+
+print("")
+print("=== HIGH FRICTION SCENARIOS ===")
+for part in data['parts']:
+    for scenario in part['scenarios']:
+        if scenario['friction_level'] == "high":
+            print(f"  [{scenario['id']}] {scenario['title']}")
+            print(f"       {scenario['status']}")

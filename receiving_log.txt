@@ -1,0 +1,91 @@
+============================================================
+   CONTAINER RECEIVING REPORT
+   Date: June 16, 2026
+   Total Line Items: 12
+   Total Units: 84
+============================================================
+
+ACTION REQUIRED
+------------------------------------------------------------
+For each item below:
+  1. Remove quantity from PRESALE in Shopify
+  2. Draft the presale product listing
+  3. Add quantity to IN-STOCK version in Shopify
+
+PRODUCT: Valencia Single Door
+----------------------------------------
+  ▸ Valencia Single Door | 36x80 | Matte Black | Clear Tempered | Flat | Lever Handle | Left Hand
+    Qty to move: 10 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  ▸ Valencia Single Door | 32x80 | Matte Black | Clear Tempered | Flat | Lever Handle | Right Hand
+    Qty to move: 8 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  Subtotal for Valencia Single Door: 18 units
+
+PRODUCT: Sevilla French Door
+----------------------------------------
+  ▸ Sevilla French Door | 72x80 | Matte White | Frosted Tempered | Flat | Lever Handle | Left Hand
+    Qty to move: 5 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  ▸ Sevilla French Door | 72x96 | Matte White | Frosted Tempered | Arch | Lever Handle | Right Hand
+    Qty to move: 4 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  Subtotal for Sevilla French Door: 9 units
+
+PRODUCT: Cordova Sliding Window
+----------------------------------------
+  ▸ Cordova Sliding Window | 48x36 | Matte Black | Clear Tempered | Flat
+    Qty to move: 12 units
+    Add-on: Screen  (+$30 per unit)
+
+  ▸ Cordova Sliding Window | 60x48 | Matte Black | Clear Tempered | Flat
+    Qty to move: 6 units
+    Add-on: Screen  (+$30 per unit)
+
+  Subtotal for Cordova Sliding Window: 18 units
+
+PRODUCT: Granada Bi-fold Door
+----------------------------------------
+  ▸ Granada Bi-fold Door | 96x80 | Matte Black | Clear Tempered | Flat | Lever Handle | Left Hand
+    Qty to move: 3 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  ▸ Granada Bi-fold Door | 96x80 | Matte White | Clear Tempered | Flat | Lever Handle | Right Hand
+    Qty to move: 3 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  Subtotal for Granada Bi-fold Door: 6 units
+
+PRODUCT: Malaga Single Door
+----------------------------------------
+  ▸ Malaga Single Door | 36x80 | Gunmetal | No Glass | Flat | Deadbolt | Left Hand
+    Qty to move: 15 units
+
+  ▸ Malaga Single Door | 32x80 | Gunmetal | No Glass | Flat | Deadbolt | Right Hand
+    Qty to move: 10 units
+
+  Subtotal for Malaga Single Door: 25 units
+
+PRODUCT: Altea Double Door
+----------------------------------------
+  ▸ Altea Double Door | 72x80 | Matte Black | Clear Tempered | Arch | Lever Handle | Left Hand
+    Qty to move: 4 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  ▸ Altea Double Door | 72x80 | Matte Black | Frosted Tempered | Arch | Lever Handle | Right Hand
+    Qty to move: 4 units
+    Add-on: Weatherstripping  (+$45 per unit)
+
+  Subtotal for Altea Double Door: 8 units
+
+============================================================
+TOTAL UNITS RECEIVED: 84
+============================================================
+
+Received by: _______________________
+Verified by: _______________________
+Notes: ____________________________
