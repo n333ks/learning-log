@@ -14,17 +14,16 @@ Steps
      • Serial Number and Status are per unit
 3. Row order within each variant: In Stock → Pre-Sale → In Production
    (Pre-Sale and In Production rows: none yet — added as units arrive)
-4. Status conditional formatting (whole-row highlight):
-     "In Stock"      → green
-     "Pre-Sale"      → yellow
-     "In Production" → red
-     "Allocated …"   → blue  (prefix match via LEFT(), order number varies)
+4. Variance column CF: red fill + red font when negative.
+5. Status column (L) CF: coloured fill, black font — col L only, no row bleed.
+6. Design-block borders: medium outer border around each Design Name's rows.
 """
 
 from openpyxl import load_workbook, Workbook
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
-from openpyxl.formatting.rule import FormulaRule
+from openpyxl.formatting.rule import CellIsRule, FormulaRule
 from openpyxl.utils import get_column_letter
+from fix_inventory_formatting import apply_design_block_borders
 
 INVENTORY_FILE = "inventory_master.xlsx"
 
@@ -76,15 +75,16 @@ COL_WIDTHS = {
     C_STATUS:   16,
 }
 
-# Conditional formatting rules for Status column.
-# Formula references $L2 with a relative row — openpyxl shifts it correctly
-# for each row when the rule is applied to a multi-row range.
-STATUS_CF_RULES = [
-    ('=$L2="In Stock"',           "C6EFCE", "375623"),  # green
-    ('=$L2="Pre-Sale"',           "FFEB9C", "9C6500"),  # yellow
-    ('=$L2="In Production"',      "FFC7CE", "9C0006"),  # red
-    ('=LEFT($L2,9)="Allocated"',  "BDD7EE", "1F3864"),  # blue (prefix match)
+# Status CF: (excel_comparison_value, CellIsRule operator, fill ARGB).
+# Applied to col L only; font always black.  8-char ARGB = fully opaque.
+STATUS_CF = [
+    ('"In Stock"',      "equal", "FFC6EFCE"),   # green
+    ('"Pre-Sale"',      "equal", "FFFFEB9C"),   # yellow
+    ('"In Production"', "equal", "FFFFC7CE"),   # red (light)
 ]
+ALLOCATED_FILL    = "FFBDD7EE"   # blue — prefix-match FormulaRule
+VARIANCE_NEG_FILL = "FFFFCCCC"
+VARIANCE_NEG_FONT = "FFC00000"
 
 # Columns that get center alignment in data rows
 CENTER_COLS = {C_INSTOCK, C_INPROD, C_PRESALE, C_OPTIMAL, C_VARIANCE, C_SERIAL, C_STATUS}
@@ -150,8 +150,8 @@ def _border():
     return Border(left=s, right=s, top=s, bottom=s)
 
 BORDER    = _border()
-FONT_HDR  = Font(name="Arial", size=10, bold=True)
-FONT_BASE = Font(name="Arial", size=10)
+FONT_HDR  = Font(name="Arial", size=10, bold=True,  color="FF000000")
+FONT_BASE = Font(name="Arial", size=10, bold=False, color="FF000000")
 FILL_HDR  = PatternFill("solid", fgColor="BDD7EE")
 ALIGN_C   = Alignment(horizontal="center", vertical="center")
 ALIGN_L   = Alignment(horizontal="left",   vertical="center")
@@ -208,18 +208,40 @@ def build_new_workbook(variants_ordered, variant_optimal, variant_serials):
 
     last_data_row = current_row - 1
 
-    # Conditional formatting: whole-row highlight keyed on Status column ($L)
     if last_data_row >= DATA_START:
-        cf_range = f"$A${DATA_START}:${get_column_letter(TOTAL_COLS)}${last_data_row}"
-        for formula, fill_hex, font_hex in STATUS_CF_RULES:
+        var_range    = f"J{DATA_START}:J{last_data_row}"
+        status_range = f"L{DATA_START}:L{last_data_row}"
+
+        # Variance CF: negative → red fill + red font
+        ws.conditional_formatting.add(
+            var_range,
+            CellIsRule(
+                operator="lessThan",
+                formula=["0"],
+                fill=PatternFill("solid", fgColor=VARIANCE_NEG_FILL),
+                font=Font(name="Arial", size=10, color=VARIANCE_NEG_FONT),
+            ),
+        )
+
+        # Status CF: coloured fill, black font — col L only
+        for excel_value, operator, fill_argb in STATUS_CF:
             ws.conditional_formatting.add(
-                cf_range,
-                FormulaRule(
-                    formula=[formula],
-                    fill=PatternFill("solid", fgColor=fill_hex),
-                    font=Font(name="Arial", size=10, color=font_hex),
+                status_range,
+                CellIsRule(
+                    operator=operator,
+                    formula=[excel_value],
+                    fill=PatternFill("solid", fgColor=fill_argb),
+                    font=Font(name="Arial", size=10, color="FF000000"),
                 ),
             )
+        ws.conditional_formatting.add(
+            status_range,
+            FormulaRule(
+                formula=[f'=LEFT($L{DATA_START},9)="Allocated"'],
+                fill=PatternFill("solid", fgColor=ALLOCATED_FILL),
+                font=Font(name="Arial", size=10, color="FF000000"),
+            ),
+        )
 
     # Column widths
     for col, width in COL_WIDTHS.items():
@@ -227,6 +249,9 @@ def build_new_workbook(variants_ordered, variant_optimal, variant_serials):
 
     # Freeze row 1 (header) and col A (Design Name): freeze_panes = B2
     ws.freeze_panes = ws.cell(row=DATA_START, column=C_SIZE)
+
+    # Design-block borders (medium outer border per Design Name group)
+    apply_design_block_borders(ws)
 
     wb.save(INVENTORY_FILE)
     return last_data_row
