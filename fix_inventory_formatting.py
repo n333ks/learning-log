@@ -77,18 +77,26 @@ def apply_design_block_borders(ws, data_start=DATA_START, total_cols=TOTAL_COLS)
             )
 
     # Step 2 — locate block boundaries
+    # Blank rows between variants of the same design are included in the block
+    # (left/right thick border runs through them).  Blank rows between two
+    # different designs are excluded from both blocks.
     blocks = []
-    current = None
-    block_start = None
+    current      = None
+    block_start  = None
+    last_content = None   # last row whose col A has a value for `current`
+
     for r in range(data_start, last_row + 1):
         name = ws.cell(row=r, column=1).value
-        if name != current:
-            if current is not None:
-                blocks.append((block_start, r - 1, current))
-            current = name
-            block_start = r
+        if name:
+            if name != current:
+                if current is not None:
+                    blocks.append((block_start, last_content, current))
+                current     = name
+                block_start = r
+            last_content = r   # advance on every content row of this design
+
     if current is not None:
-        blocks.append((block_start, last_row, current))
+        blocks.append((block_start, last_content, current))
 
     # Step 3 — draw thick outer border for each block
     for first_r, last_r, _name in blocks:
@@ -105,12 +113,12 @@ def apply_design_block_borders(ws, data_start=DATA_START, total_cols=TOTAL_COLS)
 
 
 # ── Core formatting fix ───────────────────────────────────────────────────────
-def fix_formatting(ws):
+def fix_formatting(ws, data_start=DATA_START):
     """Apply all four formatting fixes to ws in place."""
     last_row = ws.max_row
 
     # ── Fix 1: black font on every body cell ─────────────────────────────────
-    for r in range(DATA_START, last_row + 1):
+    for r in range(data_start, last_row + 1):
         for c in range(1, TOTAL_COLS + 1):
             cell = ws.cell(row=r, column=c)
             cell.font = Font(
@@ -122,8 +130,8 @@ def fix_formatting(ws):
     # ── Fix 2 & 3: replace all CF rules ──────────────────────────────────────
     ws.conditional_formatting = ConditionalFormattingList()
 
-    var_range    = f"{VARIANCE_COL}{DATA_START}:{VARIANCE_COL}{last_row}"
-    status_range = f"{STATUS_COL}{DATA_START}:{STATUS_COL}{last_row}"
+    var_range    = f"{VARIANCE_COL}{data_start}:{VARIANCE_COL}{last_row}"
+    status_range = f"{STATUS_COL}{data_start}:{STATUS_COL}{last_row}"
 
     # Fix 2 — Variance: negative → light-red fill + dark-red font
     ws.conditional_formatting.add(
@@ -152,14 +160,14 @@ def fix_formatting(ws):
     ws.conditional_formatting.add(
         status_range,
         FormulaRule(
-            formula=[f'=LEFT($L{DATA_START},9)="Allocated"'],
+            formula=[f'=LEFT($L{data_start},9)="Allocated"'],
             fill=PatternFill("solid", fgColor=ALLOCATED_FILL),
             font=Font(name="Arial", size=10, color="FF000000"),
         ),
     )
 
     # ── Fix 4: design-block borders ──────────────────────────────────────────
-    blocks = apply_design_block_borders(ws)
+    blocks = apply_design_block_borders(ws, data_start=data_start)
 
     return blocks
 
