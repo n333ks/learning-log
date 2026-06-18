@@ -101,11 +101,11 @@ def in_production_rows(ws, rows):
 
 # ── Write helpers ─────────────────────────────────────────────────────────────
 
-def write_detail_row(ws, r, variant, serial, status):
+def write_detail_row(ws, r, variant, serial, status, first=False):
     for c, val in enumerate(variant, start=1):
         cell = ws.cell(r, c)
         cell.value     = val
-        cell.font      = _font(color=WHITE)
+        cell.font      = _font(bold=True) if first else _font(color=WHITE)
         cell.alignment = _left()
     ws.cell(r, C_SERIAL).value     = serial
     ws.cell(r, C_SERIAL).font      = _font()
@@ -167,15 +167,17 @@ def execute_plan(ws, plan):
     for insert_after, rows_to_write in plan:
         n = len(rows_to_write)
         ws.insert_rows(insert_after + 1, amount=n)
+        prev_blank = True
         for i, row_spec in enumerate(rows_to_write):
             r = insert_after + 1 + i
             if row_spec is None:
-                # blank row — clear everything
                 for c in range(1, C_STATUS + 1):
                     ws.cell(r, c).value = None
+                prev_blank = True
             else:
                 key, serial, status = row_spec
-                write_detail_row(ws, r, key, serial, status)
+                write_detail_row(ws, r, key, serial, status, first=prev_blank)
+                prev_blank = False
 
 
 def process_manifest(ws, manifest_rows, container_id):

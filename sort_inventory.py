@@ -92,15 +92,17 @@ def write_blocks(ws, blocks):
                 row += 1
 
             key = variant["key"]
-            white_font = _font(color=WHITE)
             left_align = Alignment(horizontal="left")
             center     = Alignment(horizontal="center")
 
-            for serial, status in variant["rows"]:
+            for i, (serial, status) in enumerate(variant["rows"]):
+                # First row of each variant: bold black (visible summary)
+                # Subsequent rows: white (hidden repeated labels)
+                a_e_font = _font(bold=(i == 0)) if i == 0 else _font(color=WHITE)
                 for c, val in enumerate(key, start=1):
                     cell = ws.cell(row, c)
                     cell.value     = val
-                    cell.font      = white_font
+                    cell.font      = a_e_font
                     cell.alignment = left_align
                 ws.cell(row, C_SERIAL).value     = serial
                 ws.cell(row, C_SERIAL).font      = _font()
