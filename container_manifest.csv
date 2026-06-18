@@ -1,13 +1,13 @@
-Design Name,Quantity,Size,Finish,Glass Type,Top Shape,Hardware,Add-Ons,Unit Price,Add-On Price,Swing,Serial Numbers
-Valencia Single Door,10,36x80,Matte Black,Clear Tempered,Flat,Lever Handle,Weatherstripping,1200,45,Left Hand,VAL-0001;VAL-0002;VAL-0003;VAL-0004;VAL-0005;VAL-0006;VAL-0007;VAL-0008;VAL-0009;VAL-0010
-Valencia Single Door,8,32x80,Matte Black,Clear Tempered,Flat,Lever Handle,Weatherstripping,1150,45,Right Hand,VAL-0011;VAL-0012;VAL-0013;VAL-0014;VAL-0015;VAL-0016;VAL-0017;VAL-0018
-Sevilla French Door,5,72x80,Matte White,Frosted Tempered,Flat,Lever Handle,Weatherstripping,2400,45,Left Hand,SEV-0001;SEV-0002;SEV-0003;SEV-0004;SEV-0005
-Sevilla French Door,4,72x96,Matte White,Frosted Tempered,Arch,Lever Handle,Weatherstripping,2800,45,Right Hand,SEV-0006;SEV-0007;SEV-0008;SEV-0009
-Cordova Sliding Window,12,48x36,Matte Black,Clear Tempered,Flat,None,Screen,650,30,N/A,COR-0001;COR-0002;COR-0003;COR-0004;COR-0005;COR-0006;COR-0007;COR-0008;COR-0009;COR-0010;COR-0011;COR-0012
-Cordova Sliding Window,6,60x48,Matte Black,Clear Tempered,Flat,None,Screen,780,30,N/A,COR-0013;COR-0014;COR-0015;COR-0016;COR-0017;COR-0018
-Granada Bi-fold Door,3,96x80,Matte Black,Clear Tempered,Flat,Lever Handle,Weatherstripping,3200,45,Left Hand,GRA-0001;GRA-0002;GRA-0003
-Granada Bi-fold Door,3,96x80,Matte White,Clear Tempered,Flat,Lever Handle,Weatherstripping,3200,45,Right Hand,GRA-0004;GRA-0005;GRA-0006
-Malaga Single Door,15,36x80,Gunmetal,No Glass,Flat,Deadbolt,None,980,0,Left Hand,MAL-0001;MAL-0002;MAL-0003;MAL-0004;MAL-0005;MAL-0006;MAL-0007;MAL-0008;MAL-0009;MAL-0010;MAL-0011;MAL-0012;MAL-0013;MAL-0014;MAL-0015
-Malaga Single Door,10,32x80,Gunmetal,No Glass,Flat,Deadbolt,None,930,0,Right Hand,MAL-0016;MAL-0017;MAL-0018;MAL-0019;MAL-0020;MAL-0021;MAL-0022;MAL-0023;MAL-0024;MAL-0025
-Altea Double Door,4,72x80,Matte Black,Clear Tempered,Arch,Lever Handle,Weatherstripping,2600,45,Left Hand,ALT-0001;ALT-0002;ALT-0003;ALT-0004
-Altea Double Door,4,72x80,Matte Black,Frosted Tempered,Arch,Lever Handle,Weatherstripping,2600,45,Right Hand,ALT-0005;ALT-0006;ALT-0007;ALT-0008
+Design Name,Size,Finish,Swing,Glass Type,Quantity,Serial Numbers
+Valencia Single Door,32" x 80",Matte Black,Left Inswing,Clear,3,26-0502-0010;26-0502-0011;26-0502-0012
+Valencia Single Door,36" x 80",Matte Black,Right Inswing,Clear,8,26-0515-0013;26-0515-0014;26-0515-0015;26-0515-0016;26-0515-0017;26-0515-0018;26-0515-0019;26-0515-0020
+Sevilla French Door,36" x 80",Satin White,Left Inswing,None,2,26-0521-0021;26-0521-0022
+Sevilla French Door,72" x 80",Matte White,Left Inswing,Frosted,5,26-0521-0023;26-0521-0024;26-0521-0025;26-0521-0026;26-0521-0027
+Cordova Sliding Window,32" x 80",Matte Black,Right Inswing,Frosted,6,26-0604-0028;26-0604-0029;26-0604-0030;26-0604-0031;26-0604-0032;26-0604-0033
+Cordova Sliding Window,48" x 36",Matte Black,Left Inswing,Clear,12,26-0604-0034;26-0604-0035;26-0604-0036;26-0604-0037;26-0604-0038;26-0604-0039;26-0604-0040;26-0604-0041;26-0604-0042;26-0604-0043;26-0604-0044;26-0604-0045
+Granada Bi-fold Door,36" x 80",Matte Black,Right Inswing,Clear,3,26-0611-0046;26-0611-0047;26-0611-0048
+Granada Bi-fold Door,96" x 80",Matte Black,Left Inswing,Clear,3,26-0611-0049;26-0611-0050;26-0611-0051
+Malaga Single Door,32" x 80",Brushed Nickel,Left Inswing,None,4,26-0618-0052;26-0618-0053;26-0618-0054;26-0618-0055
+Malaga Single Door,36" x 80",Gunmetal,Left Inswing,None,15,26-0618-0056;26-0618-0057;26-0618-0058;26-0618-0059;26-0618-0060;26-0618-0061;26-0618-0062;26-0618-0063;26-0618-0064;26-0618-0065;26-0618-0066;26-0618-0067;26-0618-0068;26-0618-0069;26-0618-0070
+Altea Double Door,36" x 80",Matte Black,Left Inswing,Rain,2,26-0625-0071;26-0625-0072
+Altea Double Door,72" x 80",Matte Black,Left Inswing,Clear,4,26-0625-0073;26-0625-0074;26-0625-0075;26-0625-0076
