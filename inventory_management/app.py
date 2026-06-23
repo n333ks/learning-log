@@ -31,8 +31,11 @@ from db import (
     get_warehouse_grouped, get_sales_grouped, get_order_prep_summary,
     log_activity, get_activity_log,
     approve_warehouse_order, reject_warehouse_order,
+    create_change_request, get_all_change_requests, get_change_request, update_change_request,
+    get_warehouse_change_requests,
     CHECKLIST_ITEMS,
 )
+from change_orders import SCENARIOS, NON_NEGOTIABLES, FRICTION_COLOR, determine_scenario, get_scenario
 from constants import MANIFEST_DIR, MANIFEST_PATTERN, DB_PATH, get_sku, calculate_cost
 from parse_manifest import load_manifest, manifest_key, manifest_serials, manifest_status, container_id_from_filename, process_manifest
 from export_excel import export_excel
@@ -295,7 +298,6 @@ def sales():
 def warehouse():
     conn = get_conn()
     summaries, units = get_warehouse_grouped(conn)
-    # checklist done count per order (total = unit_count * len(CHECKLIST_ITEMS))
     progress_rows = conn.execute("""
         SELECT wh.order_number,
                SUM(CASE WHEN wc.completed=1 THEN 1 ELSE 0 END) AS done
@@ -304,9 +306,11 @@ def warehouse():
         GROUP BY wh.order_number
     """).fetchall()
     order_progress = {r['order_number']: (r['done'] or 0) for r in progress_rows}
+    change_requests = get_warehouse_change_requests(conn)
     conn.close()
     return render_template('warehouse.html', summaries=summaries, units=units,
-                           order_progress=order_progress, total_checklist=len(CHECKLIST_ITEMS))
+                           order_progress=order_progress, total_checklist=len(CHECKLIST_ITEMS),
+                           change_requests=change_requests, scenarios=SCENARIOS)
 
 
 @app.route('/warehouse/prep/<int:wh_id>')
@@ -904,6 +908,170 @@ def purchase_orders_view(filename):
 @login_required
 def purchase_orders_download(filename):
     return send_from_directory(PO_DIR, filename, as_attachment=True)
+
+
+# ── Change Requests ────────────────────────────────────────────────────────────
+
+@app.route('/change-requests')
+@admin_required
+def change_requests():
+    conn = get_conn()
+    requests = get_all_change_requests(conn)
+    conn.close()
+    return render_template('change_requests.html',
+                           requests=requests, scenarios=SCENARIOS)
+
+
+@app.route('/change-requests/new')
+@admin_required
+def change_request_new():
+    order_number = request.args.get('order', '').strip()
+    customer     = request.args.get('customer', '').strip()
+
+    auto_scenario  = None
+    needs_question = None   # 'pickup' | 'delivery' | None
+    order_info     = None
+
+    if order_number:
+        conn = get_conn()
+        so_row = conn.execute(
+            "SELECT status FROM sales_orders WHERE order_number=? LIMIT 1",
+            (order_number,)
+        ).fetchone()
+        wh_row = conn.execute(
+            "SELECT status, fulfillment_type FROM warehouse WHERE order_number=? LIMIT 1",
+            (order_number,)
+        ).fetchone()
+        conn.close()
+
+        if so_row:
+            # Still in sales_orders — allocated/pre-sale, hasn't moved to warehouse yet
+            auto_scenario = '1A'
+            order_info = {'label': f'Allocated · {so_row["status"]}'}
+        elif wh_row:
+            status = wh_row['status']
+            ft     = wh_row['fulfillment_type'] or 'pickup'
+            order_info = {'label': f'Warehouse · {status}'}
+            if status in ('In Prep', 'Pending Review'):
+                auto_scenario = '1A'
+            elif status == 'Ready for Pickup':
+                needs_question = 'pickup'
+            elif status == 'Ready for Delivery':
+                needs_question = 'delivery'
+            else:
+                auto_scenario = '1A'
+
+    return render_template('change_request_new.html',
+                           order_number=order_number, customer=customer,
+                           order_info=order_info, auto_scenario=auto_scenario,
+                           needs_question=needs_question, scenarios=SCENARIOS)
+
+
+@app.route('/change-requests/create', methods=['POST'])
+@admin_required
+def change_request_create():
+    order_number   = request.form.get('order_number', '').strip()
+    customer       = request.form.get('customer', '').strip()
+    auto_scenario  = request.form.get('auto_scenario', '').strip()
+    request_detail = request.form.get('request_detail', '').strip()
+    notes          = request.form.get('notes', '').strip()
+    username       = session.get('username', 'unknown')
+    full_name      = session.get('full_name', username)
+
+    if not order_number:
+        flash('Order number is required.', 'error')
+        return redirect(url_for('change_request_new'))
+
+    if auto_scenario:
+        scenario_id = auto_scenario
+    else:
+        # Determine from follow-up questions (Ready for Pickup/Delivery edge cases)
+        pickup_departed   = request.form.get('pickup_departed', '')
+        shipment_departed = request.form.get('shipment_departed', '')
+        carrier_type      = request.form.get('carrier_type', '')
+
+        if pickup_departed == 'no':
+            scenario_id = '1A'
+        elif pickup_departed == 'yes':
+            scenario_id = '1D'
+        elif shipment_departed == 'no':
+            scenario_id = '1A'
+        elif carrier_type == 'ltl':
+            scenario_id = '1B'
+        elif carrier_type == 'non-ltl':
+            scenario_id = '1C'
+        else:
+            flash('Could not determine scenario — please answer all questions.', 'error')
+            return redirect(url_for('change_request_new', order=order_number, customer=customer))
+
+    if scenario_id not in SCENARIOS:
+        flash('Invalid scenario.', 'error')
+        return redirect(url_for('change_request_new', order=order_number, customer=customer))
+
+    conn = get_conn()
+    cr_id = create_change_request(conn, order_number, customer, 'stock', scenario_id,
+                                  request_detail, notes, username)
+    log_activity(conn, username, full_name, 'Created change request',
+                 detail=f'Scenario {scenario_id}: {SCENARIOS[scenario_id]["title"]}',
+                 order_number=order_number)
+    conn.close()
+    flash(f'Change request created — scenario {scenario_id}.', 'success')
+    return redirect(url_for('change_request_detail', cr_id=cr_id))
+
+
+@app.route('/change-requests/<int:cr_id>')
+@admin_required
+def change_request_detail(cr_id):
+    conn = get_conn()
+    cr   = get_change_request(conn, cr_id)
+    if not cr:
+        conn.close()
+        flash('Change request not found.', 'error')
+        return redirect(url_for('change_requests'))
+
+    # Fetch the order's current units (sales_orders or warehouse)
+    order_units = conn.execute("""
+        SELECT so.serial_number, v.design_name, v.size, v.finish, v.swing, v.glass_type,
+               so.status, so.container_id, 'sales' AS source
+        FROM sales_orders so JOIN variants v ON v.id = so.variant_id
+        WHERE so.order_number = ?
+        UNION ALL
+        SELECT wh.serial_number, v.design_name, v.size, v.finish, v.swing, v.glass_type,
+               wh.status, wh.container_id, 'warehouse' AS source
+        FROM warehouse wh JOIN variants v ON v.id = wh.variant_id
+        WHERE wh.order_number = ?
+    """, (cr['order_number'], cr['order_number'])).fetchall()
+
+    available = [dict(u) for u in get_available_units(conn)]
+    conn.close()
+
+    scenario = get_scenario(cr['scenario_id'])
+    friction_colors = FRICTION_COLOR.get(scenario.get('friction_level', 'low'), ('#F5F5F7', '#6E6E73'))
+    return render_template('change_request_detail.html',
+                           cr=cr, scenario=scenario,
+                           friction_colors=friction_colors,
+                           non_negotiables=NON_NEGOTIABLES,
+                           order_units=order_units,
+                           available_units=available)
+
+
+@app.route('/change-requests/<int:cr_id>/update', methods=['POST'])
+@admin_required
+def change_request_update(cr_id):
+    status     = request.form.get('status', 'Open')
+    resolution = request.form.get('resolution', '').strip()
+    notes      = request.form.get('notes', '').strip()
+    username   = session.get('username', 'unknown')
+    full_name  = session.get('full_name', username)
+    conn = get_conn()
+    cr   = get_change_request(conn, cr_id)
+    update_change_request(conn, cr_id, status, resolution, notes)
+    log_activity(conn, username, full_name, f'Change request → {status}',
+                 detail=resolution or None,
+                 order_number=cr['order_number'] if cr else None)
+    conn.close()
+    flash(f'Change request updated — {status}.', 'success')
+    return redirect(url_for('change_request_detail', cr_id=cr_id))
 
 
 if __name__ == '__main__':

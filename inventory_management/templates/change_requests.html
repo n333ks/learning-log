@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}Change Requests{% endblock %}
+{% block page_title %}Change Requests{% endblock %}
+
+{% block page_actions %}
+<div style="display:flex; gap:10px; align-items:center;">
+    <span id="crCount" class="unit-count"></span>
+    <input type="text" id="crSearch" class="search-input" placeholder="Order #, customer, scenario…"
+           oninput="filterCR()" style="padding:8px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:14px; outline:none; width:260px;">
+    <select id="crStatusFilter" class="form-select" style="width:auto; min-width:130px;" onchange="filterCR()">
+        <option value="">All Statuses</option>
+        <option value="Open">Open</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Resolved">Resolved</option>
+    </select>
+    <a href="{{ url_for('change_request_new') }}" class="btn btn-primary">+ New Request</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card card-no-padding">
+    <div class="table-wrapper">
+        <table id="crTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Type</th>
+                    <th>Scenario</th>
+                    <th>Friction</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cr in requests %}
+                {% set s = scenarios.get(cr.scenario_id, {}) %}
+                {% set fl = s.get('friction_level', '') %}
+                <tr class="cr-row"
+                    data-order="{{ cr.order_number | lower }}"
+                    data-customer="{{ cr.customer | lower }}"
+                    data-scenario="{{ cr.scenario_id | lower }}"
+                    data-status="{{ cr.status }}">
+                    <td class="font-mono text-muted" style="font-size:12px;">#{{ cr.id }}</td>
+                    <td class="font-mono font-bold">{{ cr.order_number }}</td>
+                    <td style="font-weight:500;">{{ cr.customer }}</td>
+                    <td>
+                        {% if cr.order_type == 'custom' %}
+                            <span class="badge" style="background:#EDE7F6; color:#4527A0;">Custom</span>
+                        {% else %}
+                            <span class="badge" style="background:#E3F2FD; color:#1565C0;">Stock</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="font-mono" style="font-size:12px; font-weight:600; color:#1D1D1F;">{{ cr.scenario_id }}</span>
+                        <span style="font-size:12px; color:#6E6E73; margin-left:6px;">{{ s.get('title', '') }}</span>
+                    </td>
+                    <td>
+                        {% if fl == 'low' %}
+                            <span class="badge" style="background:#E8F5E9; color:#2E7D32;">Low</span>
+                        {% elif fl == 'medium' %}
+                            <span class="badge" style="background:#FFF8E1; color:#F57F17;">Medium</span>
+                        {% elif fl == 'high' %}
+                            <span class="badge" style="background:#FFEBEE; color:#C62828;">High</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if cr.status == 'Open' %}
+                            <span class="badge badge-pre-sale">Open</span>
+                        {% elif cr.status == 'In Progress' %}
+                            <span class="badge badge-allocated">In Progress</span>
+                        {% else %}
+                            <span class="badge badge-in-stock">Resolved</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-muted" style="font-size:12px;">{{ (cr.created_at or '')[:10] }}</td>
+                    <td>
+                        <a href="{{ url_for('change_request_detail', cr_id=cr.id) }}"
+                           class="btn btn-sm btn-secondary">View</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr><td colspan="9" class="empty-cell">No change requests yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+function filterCR() {
+    const q      = (document.getElementById('crSearch').value || '').toLowerCase().trim();
+    const status = document.getElementById('crStatusFilter').value;
+    let visible  = 0;
+    document.querySelectorAll('.cr-row').forEach(row => {
+        const matchQ = !q || row.dataset.order.includes(q) || row.dataset.customer.includes(q) || row.dataset.scenario.includes(q);
+        const matchS = !status || row.dataset.status === status;
+        const show   = matchQ && matchS;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    const el = document.getElementById('crCount');
+    if (el) el.textContent = visible + ' request' + (visible !== 1 ? 's' : '');
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const rows = document.querySelectorAll('.cr-row').length;
+    const el   = document.getElementById('crCount');
+    if (el) el.textContent = rows + ' request' + (rows !== 1 ? 's' : '');
+});
+</script>
+{% endblock %}

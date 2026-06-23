@@ -129,7 +129,13 @@
                             <span class="badge">{{ st }}</span>
                         {% endif %}
                     </td>
-                    <td></td>
+                    <td>
+                        {% if is_admin %}
+                        <a href="{{ url_for('change_request_new', order=s.order_number, customer=s.customer) }}"
+                           class="btn btn-sm btn-secondary" onclick="event.stopPropagation();"
+                           title="Log a customer change request for this order">Change Request</a>
+                        {% endif %}
+                    </td>
                 </tr>
 
                 <!-- Unit sub-rows -->

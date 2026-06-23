@@ -1,0 +1,300 @@
+{
+  "document": {
+    "title": "Change Order Procedures",
+    "company": "PINKYS",
+    "department": "Customer Service / Ops",
+    "applies_to": "Stock & Special Orders",
+    "systems": ["Shopify", "PTv2", "PTv3"],
+    "last_reviewed": "2024-04",
+    "classification": "Internal Use Only",
+    "review_cycle": "Annually or when process changes"
+  },
+
+  "trigger": {
+    "description": "A customer calls or emails requesting a change to one or more items on their existing Shopify order.",
+    "first_action": "Log into PTv2 and verify current order status before taking any action or making any commitment to the customer."
+  },
+
+  "non_negotiables": [
+    {
+      "id": "nn-01",
+      "rule": "No change released before payment confirmed",
+      "detail": "PTv2/PTv3 update timestamp must always follow payment confirmation, never precede it.",
+      "owner_flag": true
+    },
+    {
+      "id": "nn-02",
+      "rule": "No refund issued before inspection completed",
+      "detail": "If damage is found after a refund is already issued, PINKYS absorbs that cost. Inspection first, always.",
+      "owner_flag": true
+    },
+    {
+      "id": "nn-03",
+      "rule": "No custom order change promised before production confirms feasibility",
+      "detail": "CS must contact production before communicating anything to the customer. Promises made before that check create liability.",
+      "owner_flag": true
+    },
+    {
+      "id": "nn-04",
+      "rule": "All fees are paid by the customer",
+      "detail": "Restocking, reverse shipping, and change fees are always customer-borne. Customer-initiated changes carry zero cost to the business.",
+      "owner_flag": true
+    }
+  ],
+
+  "standing_requirements": [
+    {
+      "id": "sr-01",
+      "rule": "Everything in writing",
+      "detail": "All change requests must be documented in writing. Customer must reply to their order confirmation email before any action is taken."
+    },
+    {
+      "id": "sr-02",
+      "rule": "Verify order status first",
+      "detail": "Order status in PTv2/PTv3 must be confirmed before any commitment is made to the customer."
+    },
+    {
+      "id": "sr-03",
+      "rule": "Payment before release",
+      "detail": "Payment must be confirmed received before any change is released to the warehouse or production."
+    },
+    {
+      "id": "sr-04",
+      "rule": "Refunds are net of restocking fee",
+      "detail": "All refunds are processed net of the applicable 25% restocking fee where applicable."
+    },
+    {
+      "id": "sr-05",
+      "rule": "Screenshot all system updates",
+      "detail": "Take a screenshot of PTv3 once all changes are reflected to confirm system accuracy."
+    },
+    {
+      "id": "sr-06",
+      "rule": "Escalate when unsure",
+      "detail": "When in doubt, escalate to Elizabeth (Customer Service) or the warehouse manager before responding to the customer."
+    }
+  ],
+
+  "parts": [
+    {
+      "id": "part-a",
+      "title": "Stock / Presale Orders",
+      "description": "Use this path when the order was placed through the online Shopify Stock Order flow.",
+      "first_step": "Log into PTv2, locate the order, and identify the applicable scenario below.",
+      "scenarios": [
+        {
+          "id": "1A",
+          "title": "Order is still in the warehouse",
+          "status": "Change can be made",
+          "friction_level": "low",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "If an order hasn't left the building, a change is the least disruptive outcome for everyone. No shipping costs are wasted and the customer gets what they want.",
+          "cs_steps": [
+            "Direct the customer to reply to their order confirmation email with all requested changes in writing. If by phone, still require email confirmation before acting.",
+            "Notify the warehouse manager that the order has been flagged for a change and request that all actions taken be reversed.",
+            "Use the edit function in Shopify to update the order per the customer's request.",
+            "If a balance is owed, issue a balance invoice and hold until payment is received.",
+            "Update the order card in PTv2 to reflect all changes and return the updated card to the warehouse."
+          ],
+          "warehouse_actions": [
+            "Stop all activity on the order immediately when CS flags a change — do not pick, pack, or stage further.",
+            "Reverse any actions already taken on the order (re-shelve pulled items, un-stage, etc.).",
+            "Do not process the order again until the updated PTv2 card is received from CS."
+          ],
+          "owner_verify": [
+            "Customer email reply on file before any action was taken.",
+            "PTv2 card update timestamp follows Shopify edit."
+          ]
+        },
+        {
+          "id": "1B",
+          "title": "Order already shipped via LTL",
+          "status": "Reversal possible — fees apply",
+          "friction_level": "medium",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "LTL carriers can reverse a shipment mid-transit but it costs money. The customer is responsible for all fees because the order was correct when it left.",
+          "cs_steps": [
+            "Inform the customer that the order has already shipped.",
+            "Advise the customer that reverse shipping fees back to PINKYS are required on top of original shipping already paid.",
+            "Upon receipt of reverse shipping payment, coordinate the return with the LTL carrier.",
+            "Once the order is back at PINKYS, adjust the order and advise the customer an additional outbound shipping fee applies for the new shipment."
+          ],
+          "warehouse_actions": [
+            "No floor action needed until the returned shipment arrives back at PINKYS.",
+            "When it arrives, treat as standard inbound — inspect, receive, and notify CS.",
+            "CS coordinates with the LTL carrier — warehouse role begins when product is back in the building."
+          ],
+          "owner_verify": [
+            "Reverse shipping payment confirmed before carrier return was arranged.",
+            "Additional outbound shipping fee collected before new shipment released."
+          ]
+        },
+        {
+          "id": "1C",
+          "title": "Order already shipped via NON-LTL",
+          "status": "No reversal possible — 25% restocking fee",
+          "friction_level": "high",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "Non-LTL shipments cannot be recalled once they leave the facility. The 25% restocking fee covers the labor and handling cost of receiving, inspecting, and re-processing a returned item.",
+          "warning": "NON-LTL carriers do not offer mid-transit reversals. The order must complete delivery before anything can happen.",
+          "cs_steps": [
+            "Inform the customer that the shipment cannot be reversed and delivery must be accepted.",
+            "Advise the customer that a 25% restocking fee applies and return shipping to PINKYS is their responsibility.",
+            "Issue an RMA to the customer with all required return instructions.",
+            "Upon return, inspect for damage. If no damage found, process a refund less the 25% restocking fee."
+          ],
+          "warehouse_actions": [
+            "When the return arrives with an RMA, treat as priority inbound — inspect thoroughly for shipping damage.",
+            "Document condition accurately. If damage is found, notify CS immediately before any refund is issued.",
+            "Do not accept a return without a valid RMA number. If no RMA, direct to CS before touching the product."
+          ],
+          "owner_verify": [
+            "RMA on file for the return.",
+            "Inspection record exists and predates the refund.",
+            "Refund amount reflects 25% restocking fee deduction."
+          ]
+        },
+        {
+          "id": "1D",
+          "title": "Order already picked up or locally delivered",
+          "status": "25% restocking fee applies",
+          "friction_level": "high",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "Once a customer has physical possession, the return process is identical to a standard return. Same 25% restocking fee applies for the same reasons as 1C.",
+          "cs_steps": [
+            "Advise the customer that a 25% restocking fee applies and return transportation to PINKYS is their responsibility.",
+            "Issue an RMA with all required return instructions.",
+            "Upon return, inspect for damage. If no damage found, process a refund less the 25% restocking fee."
+          ],
+          "warehouse_actions": [
+            "Same inspection process as 1C when the return arrives.",
+            "Local pickup returns may arrive without a carrier — customer may bring it back themselves. Still require RMA paperwork before accepting.",
+            "Do not accept a return without a valid RMA number. Direct to CS if none present."
+          ],
+          "owner_verify": [
+            "RMA on file for the return.",
+            "Inspection record exists and predates the refund.",
+            "Refund amount reflects 25% restocking fee deduction."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "part-b",
+      "title": "Custom / Special Orders",
+      "description": "Use this path when the order is a custom or special order. Change fees may apply depending on production status.",
+      "first_step": "Contact the production team before communicating anything to the customer. Do not commit to a change until production status is confirmed.",
+      "scenarios": [
+        {
+          "id": "B1C",
+          "title": "Production has not yet started",
+          "status": "No-fee change possible",
+          "friction_level": "low",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "If production hasn't started, a change is essentially free — no materials cut, no labor spent. The window for a no-cost change is narrow and closes fast.",
+          "cs_steps": [
+            "Confirm with the production team that no fees apply and the change can be accommodated.",
+            "Communicate to the customer that the change will be made at no charge.",
+            "Obtain the customer's request in writing via their order confirmation email.",
+            "Update Shopify, PTv3, and all CAD/order files. Notify Nikos and all relevant team members.",
+            "Take a screenshot once all systems reflect the completed changes."
+          ],
+          "warehouse_actions": [
+            "If a custom order is staged or queued, CS may contact you to confirm it hasn't entered production prep.",
+            "Accurate status reporting is critical — incorrect status reporting can lead to costly production mistakes."
+          ],
+          "owner_verify": [
+            "Production team confirmation on file before customer was notified.",
+            "PTv3 screenshot exists confirming all system updates."
+          ]
+        },
+        {
+          "id": "B1A",
+          "title": "Production can accommodate the change",
+          "status": "Change possible — fees may apply",
+          "friction_level": "medium",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "When production has started but not gone too far, a change may still be possible but costs something. Change fees cover re-work costs including materials, CAD re-draws, and labor re-allocation.",
+          "cs_steps": [
+            "Contact the production team to confirm feasibility and whether change fees apply.",
+            "Communicate the outcome to the customer including any fees and lead time impact.",
+            "Obtain written confirmation from the customer via reply to their order confirmation email.",
+            "If fees apply, issue an invoice and hold until payment is received before notifying production to proceed.",
+            "Update Shopify and PTv3 to reflect all changes. Take a screenshot confirming updates are reflected in the system."
+          ],
+          "warehouse_actions": [
+            "Hold all activity on a flagged custom order until updated CAD files and a confirmed green light from CS are received.",
+            "Do not proceed on verbal direction alone — updated PTv3 documentation must accompany any change."
+          ],
+          "owner_verify": [
+            "Change fee invoice and payment receipt on file.",
+            "Production notified only after payment was confirmed.",
+            "PTv3 screenshot on file."
+          ]
+        },
+        {
+          "id": "B1B",
+          "title": "Production cannot accommodate the change",
+          "status": "Change not possible — customer decides",
+          "friction_level": "high",
+          "cost_to_pinkys": "none",
+          "why_it_exists": "At a certain production stage, making a change would mean scrapping significant work and materials. The customer chooses to keep the order or accept whatever limited modification is still possible.",
+          "warning": "Do not make any changes if production is too far along. Present options to the customer only. No floor action until customer decision is documented.",
+          "cs_steps": [
+            "Inform the customer that the requested change cannot be made due to production status.",
+            "Present options and request a decision in writing: Option A — retain the order as originally placed (no fee). Option B — accept any partial modification still available, subject to applicable fees.",
+            "Document the customer's decision and update the order record accordingly."
+          ],
+          "warehouse_actions": [
+            "Continue production as normal unless CS explicitly instructs a stop.",
+            "If unsure whether a hold has been placed, check with manager before proceeding — do not guess."
+          ],
+          "owner_verify": [
+            "Customer decision documented in writing before any floor action was taken.",
+            "No unauthorized changes made to production order."
+          ]
+        }
+      ]
+    }
+  ],
+
+  "contacts": [
+    {
+      "role": "CAD / Production Team",
+      "emails": ["pinkyscadassistant@163.com", "cad@irondoors.qq"],
+      "note": "Contact to confirm custom order production status and feasibility of changes."
+    },
+    {
+      "role": "Production Lead",
+      "name": "Nikos",
+      "note": "Notify once custom order changes are finalized and confirmed."
+    },
+    {
+      "role": "Customer Service",
+      "name": "Elizabeth",
+      "note": "Internal escalation point for complex change requests."
+    },
+    {
+      "role": "Warehouse Manager",
+      "note": "Confirm order status and reverse warehouse actions if needed."
+    }
+  ],
+
+  "views": {
+    "cs": {
+      "description": "Customer-facing staff handling inbound change requests.",
+      "primary_fields": ["cs_steps", "standing_requirements", "contacts"],
+      "tone": "procedural"
+    },
+    "warehouse": {
+      "description": "Warehouse floor team — needs context on why the process exists and what their role is in each scenario.",
+      "primary_fields": ["warehouse_actions", "why_it_exists", "non_negotiables"],
+      "tone": "educational"
+    },
+    "owner": {
+      "description": "Owner spot-checking that the process is being followed correctly.",
+      "primary_fields": ["owner_verify", "non_negotiables", "friction_level", "cost_to_pinkys"],
+      "tone": "executive"
+    }
+  }
+}

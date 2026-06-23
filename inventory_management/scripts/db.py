@@ -114,6 +114,21 @@ CREATE TABLE IF NOT EXISTS activity_log (
     warehouse_id  INTEGER,
     created_at    TEXT
 );
+
+CREATE TABLE IF NOT EXISTS change_requests (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    order_number   TEXT NOT NULL,
+    customer       TEXT NOT NULL,
+    order_type     TEXT NOT NULL,
+    scenario_id    TEXT NOT NULL,
+    request_detail TEXT,
+    notes          TEXT,
+    status         TEXT DEFAULT 'Open',
+    resolution     TEXT,
+    created_by     TEXT,
+    created_at     TEXT,
+    updated_at     TEXT
+);
 """
 
 
@@ -500,11 +515,15 @@ def change_order_unit(conn, order_number, old_serial, new_unit_id, source="sales
         raise ValueError(f"Unit {new_unit_id} is not available (status: {new_unit['status']})")
 
     # Release old unit back to inventory
-    old_unit = conn.execute(
-        "SELECT container_id FROM units WHERE serial_number=?", (old_serial,)
-    ).fetchone()
-    old_container = old_unit["container_id"] if old_unit else None
-    restore = _restore_status(conn, old_serial, old_container)
+    if source == "warehouse":
+        # Container has physically arrived (unit is in warehouse), so always In Stock
+        restore = "In Stock"
+    else:
+        old_unit = conn.execute(
+            "SELECT container_id FROM units WHERE serial_number=?", (old_serial,)
+        ).fetchone()
+        old_container = old_unit["container_id"] if old_unit else None
+        restore = _restore_status(conn, old_serial, old_container)
     conn.execute("UPDATE units SET status=? WHERE serial_number=?", (restore, old_serial))
 
     # Claim new unit
@@ -703,11 +722,68 @@ def get_all_units(conn):
         FROM units u
         JOIN variants v ON v.id = u.variant_id
         WHERE u.status NOT LIKE 'Allocated%'
-        ORDER BY v.design_name, v.size, v.finish, v.swing, v.glass_type, u.id
+        ORDER BY v.design_name, v.size, v.finish, v.swing, v.glass_type,
+                 CASE WHEN u.serial_number IS NULL THEN 1 ELSE 0 END,
+                 u.serial_number
     """).fetchall()
 
 
 def delete_production_units(conn):
     """Remove all In Production units (for cleanup/reset)."""
     conn.execute("DELETE FROM units WHERE status='In Production'")
+    conn.commit()
+
+
+# ── Change requests ────────────────────────────────────────────────────────────
+
+def create_change_request(conn, order_number, customer, order_type, scenario_id,
+                          request_detail, notes, created_by):
+    from datetime import datetime
+    now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    cur = conn.execute(
+        """INSERT INTO change_requests
+           (order_number, customer, order_type, scenario_id, request_detail, notes,
+            status, created_by, created_at, updated_at)
+           VALUES (?,?,?,?,?,?,'Open',?,?,?)""",
+        (order_number, customer, order_type, scenario_id, request_detail, notes,
+         created_by, now, now),
+    )
+    conn.commit()
+    return cur.lastrowid
+
+
+def get_all_change_requests(conn):
+    return conn.execute(
+        "SELECT * FROM change_requests ORDER BY id DESC"
+    ).fetchall()
+
+
+def get_change_request(conn, cr_id):
+    return conn.execute(
+        "SELECT * FROM change_requests WHERE id=?", (cr_id,)
+    ).fetchone()
+
+
+def get_warehouse_change_requests(conn):
+    """Return open/in-progress change requests for orders currently in the warehouse."""
+    return conn.execute("""
+        SELECT cr.id, cr.order_number, cr.customer, cr.scenario_id, cr.request_detail,
+               cr.status, cr.created_at,
+               MAX(wh.status) AS warehouse_status
+        FROM change_requests cr
+        JOIN warehouse wh ON wh.order_number = cr.order_number
+        WHERE cr.status != 'Resolved'
+        GROUP BY cr.id
+        ORDER BY cr.id DESC
+    """).fetchall()
+
+
+def update_change_request(conn, cr_id, status, resolution, notes):
+    from datetime import datetime
+    conn.execute(
+        """UPDATE change_requests
+           SET status=?, resolution=?, notes=?, updated_at=?
+           WHERE id=?""",
+        (status, resolution, notes, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), cr_id),
+    )
     conn.commit()

@@ -1,0 +1,292 @@
+{% extends "base.html" %}
+
+{% block title %}Change Request #{{ cr.id }}{% endblock %}
+{% block page_title %}Change Request #{{ cr.id }}{% endblock %}
+
+{% block page_actions %}
+<div style="display:flex; gap:10px; align-items:center;">
+    <a href="{{ url_for('change_requests') }}" class="btn btn-secondary">← All Requests</a>
+</div>
+{% endblock %}
+
+{% block content %}
+{% set fl = scenario.get('friction_level', 'low') %}
+{% set fc_bg, fc_text = friction_colors %}
+
+<div style="display:grid; grid-template-columns:1fr 340px; gap:16px; align-items:start;">
+
+<!-- Left column: procedure steps -->
+<div>
+
+    <!-- Scenario header -->
+    <div class="card" style="margin-bottom:16px; border-left:4px solid {{ fc_text }};">
+        <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+                <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin-bottom:4px;">
+                    {{ scenario.get('part_title', '') }} · Scenario {{ cr.scenario_id }}
+                </div>
+                <h2 style="font-size:18px; font-weight:700; color:#1D1D1F; margin:0 0 6px;">{{ scenario.get('title', '') }}</h2>
+                <span style="display:inline-block; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:600; background:{{ fc_bg }}; color:{{ fc_text }};">
+                    {{ scenario.get('status_label', '') }}
+                </span>
+            </div>
+            <div style="text-align:right; font-size:12px; color:#6E6E73;">
+                <div><strong>{{ cr.order_number }}</strong></div>
+                <div>{{ cr.customer }}</div>
+                <div style="margin-top:4px;">
+                    {% if cr.order_type == 'custom' %}
+                        <span class="badge" style="background:#EDE7F6; color:#4527A0;">Custom</span>
+                    {% else %}
+                        <span class="badge" style="background:#E3F2FD; color:#1565C0;">Stock</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        {% if scenario.get('warning') %}
+        <div style="margin-top:14px; padding:12px 14px; background:#FFF3CD; border:1.5px solid #FFC107; border-radius:8px; font-size:13px; color:#856404; font-weight:500;">
+            ⚠ {{ scenario.warning }}
+        </div>
+        {% endif %}
+
+        <div style="margin-top:14px; padding:12px 14px; background:#F5F5F7; border-radius:8px; font-size:13px; color:#6E6E73; font-style:italic;">
+            {{ scenario.get('why_it_exists', '') }}
+        </div>
+    </div>
+
+    <!-- What the customer wants -->
+    {% if cr.request_detail %}
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 10px;">Customer Request</h3>
+        <p style="font-size:14px; color:#1D1D1F; margin:0; line-height:1.6;">{{ cr.request_detail }}</p>
+    </div>
+    {% endif %}
+
+    <!-- Unit swap -->
+    {% if order_units %}
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 14px;">Units on This Order</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            {% for u in order_units %}
+            <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; background:#F5F5F7; border-radius:10px;">
+                <div>
+                    <div style="font-size:14px; font-weight:600; color:#1D1D1F;">
+                        {{ u.design_name }} <span style="font-weight:400; color:#6E6E73;">· {{ u.size }} · {{ u.finish }}</span>
+                    </div>
+                    <div style="font-size:12px; color:#8E8E93; margin-top:2px; font-family:monospace;">{{ u.serial_number or '—' }}</div>
+                </div>
+                <button type="button"
+                        onclick="openSwap('{{ cr.order_number }}','{{ u.serial_number }}','{{ u.design_name }}','{{ u.size }}','{{ u.finish }}','{{ u.source }}')"
+                        class="btn btn-sm btn-secondary">Swap Unit</button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 8px;">Units on This Order</h3>
+        <p style="font-size:13px; color:#8E8E93; margin:0;">Order not found in active sales or warehouse records.</p>
+    </div>
+    {% endif %}
+
+    <!-- Swap modal -->
+    <div id="swapModal" style="display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.4); align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:16px; padding:28px; width:560px; max-width:95vw; box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px;">
+                <div>
+                    <h2 style="font-size:17px; font-weight:600; color:#1D1D1F; margin:0 0 4px;">Swap Unit</h2>
+                    <p id="swapCurrentLabel" style="font-size:13px; color:#6E6E73; margin:0;"></p>
+                </div>
+                <button onclick="closeSwap()" style="background:none; border:none; cursor:pointer; color:#6E6E73; font-size:22px; line-height:1; padding:0;">&times;</button>
+            </div>
+            <input type="text" id="swapSearch" placeholder="Search design, size, finish…" oninput="filterSwapUnits()"
+                   style="width:100%; box-sizing:border-box; padding:9px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:14px; outline:none; margin-bottom:10px;">
+            <div id="swapUnitList" style="max-height:260px; overflow-y:auto; border:1.5px solid #D2D2D7; border-radius:8px; background:#fff;"></div>
+            <p id="swapNoResults" style="display:none; font-size:13px; color:#6E6E73; text-align:center; padding:16px 0; margin:0;">No available units match your search.</p>
+            <form id="swapForm" method="POST" action="{{ url_for('sales_change_order') }}" style="margin-top:16px;">
+                <input type="hidden" name="order_number" id="swapOrderNumber">
+                <input type="hidden" name="old_serial"   id="swapOldSerial">
+                <input type="hidden" name="new_unit_id"  id="swapNewUnitId">
+                <input type="hidden" name="source"       id="swapSource">
+                <div style="display:flex; gap:10px; justify-content:flex-end;">
+                    <button type="button" onclick="closeSwap()" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" id="swapSubmit" class="btn btn-primary" disabled>Confirm Swap</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- CS Steps -->
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#0071E3; margin:0 0 14px;">
+            Customer Service Steps
+        </h3>
+        <ol style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:10px;">
+            {% for step in scenario.get('cs_steps', []) %}
+            <li style="font-size:14px; color:#1D1D1F; line-height:1.6;">{{ step }}</li>
+            {% endfor %}
+        </ol>
+    </div>
+
+    <!-- Warehouse Actions -->
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#5856D6; margin:0 0 14px;">
+            Warehouse Actions
+        </h3>
+        <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:10px;">
+            {% for action in scenario.get('warehouse_actions', []) %}
+            <li style="font-size:14px; color:#1D1D1F; line-height:1.6;">{{ action }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+    <!-- Owner Verification -->
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#34C759; margin:0 0 14px;">
+            Owner Verification Checklist
+        </h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            {% for item in scenario.get('owner_verify', []) %}
+            <label style="display:flex; align-items:flex-start; gap:10px; cursor:pointer;">
+                <input type="checkbox" style="margin-top:3px; flex-shrink:0;">
+                <span style="font-size:14px; color:#1D1D1F; line-height:1.5;">{{ item }}</span>
+            </label>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Non-negotiables -->
+    <div class="card" style="border-left:4px solid #FF3B30;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#FF3B30; margin:0 0 12px;">Non-Negotiables</h3>
+        <ul style="margin:0; padding-left:20px; display:flex; flex-direction:column; gap:8px;">
+            {% for rule in non_negotiables %}
+            <li style="font-size:13px; color:#1D1D1F; line-height:1.5;">{{ rule }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<!-- Right column: status + notes -->
+<div>
+
+    <!-- Status card -->
+    <div class="card" style="margin-bottom:16px;">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 14px;">Status</h3>
+        <form method="POST" action="{{ url_for('change_request_update', cr_id=cr.id) }}">
+            <div style="margin-bottom:12px;">
+                <select name="status" class="form-select" style="width:100%;">
+                    <option value="Open"        {% if cr.status == 'Open' %}selected{% endif %}>Open</option>
+                    <option value="In Progress" {% if cr.status == 'In Progress' %}selected{% endif %}>In Progress</option>
+                    <option value="Resolved"    {% if cr.status == 'Resolved' %}selected{% endif %}>Resolved</option>
+                </select>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px; font-weight:600; color:#6E6E73; display:block; margin-bottom:4px;">Internal Notes</label>
+                <textarea name="notes" rows="3"
+                          style="width:100%; box-sizing:border-box; padding:9px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:13px; outline:none; resize:vertical;">{{ cr.notes or '' }}</textarea>
+            </div>
+            <div style="margin-bottom:12px;">
+                <label style="font-size:12px; font-weight:600; color:#6E6E73; display:block; margin-bottom:4px;">Resolution Summary</label>
+                <textarea name="resolution" rows="3"
+                          placeholder="How was this resolved?"
+                          style="width:100%; box-sizing:border-box; padding:9px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:13px; outline:none; resize:vertical;">{{ cr.resolution or '' }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="width:100%;">Save</button>
+        </form>
+    </div>
+
+    <!-- Metadata -->
+    <div class="card">
+        <h3 style="font-size:13px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 12px;">Details</h3>
+        <div style="display:flex; flex-direction:column; gap:8px; font-size:13px;">
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#6E6E73;">Created by</span>
+                <span style="font-weight:500;">{{ cr.created_by or '—' }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#6E6E73;">Created</span>
+                <span>{{ (cr.created_at or '')[:16] }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#6E6E73;">Last updated</span>
+                <span>{{ (cr.updated_at or '')[:16] }}</span>
+            </div>
+            <div style="display:flex; justify-content:space-between;">
+                <span style="color:#6E6E73;">Friction level</span>
+                <span style="font-weight:500; color:{{ fc_text }}; text-transform:capitalize;">{{ scenario.get('friction_level', '—') }}</span>
+            </div>
+        </div>
+    </div>
+
+</div>
+</div>
+
+<script>
+const AVAILABLE_UNITS = {{ available_units | tojson }};
+let swapSelectedId = null;
+
+function openSwap(orderNum, serial, design, size, finish, source) {
+    document.getElementById('swapCurrentLabel').textContent = `${design} · ${size} · ${finish} · ${serial}`;
+    document.getElementById('swapOrderNumber').value = orderNum;
+    document.getElementById('swapOldSerial').value   = serial;
+    document.getElementById('swapSource').value      = source;
+    document.getElementById('swapNewUnitId').value   = '';
+    document.getElementById('swapSubmit').disabled   = true;
+    document.getElementById('swapSearch').value      = '';
+    swapSelectedId = null;
+    renderSwapUnits(AVAILABLE_UNITS);
+    document.getElementById('swapModal').style.display = 'flex';
+    setTimeout(() => document.getElementById('swapSearch').focus(), 50);
+}
+
+function closeSwap() {
+    document.getElementById('swapModal').style.display = 'none';
+}
+
+function filterSwapUnits() {
+    const q = document.getElementById('swapSearch').value.toLowerCase();
+    renderSwapUnits(q ? AVAILABLE_UNITS.filter(u =>
+        u.design_name.toLowerCase().includes(q) ||
+        u.size.toLowerCase().includes(q) ||
+        u.finish.toLowerCase().includes(q) ||
+        (u.serial_number || '').toLowerCase().includes(q)
+    ) : AVAILABLE_UNITS);
+}
+
+function renderSwapUnits(units) {
+    const list  = document.getElementById('swapUnitList');
+    const noRes = document.getElementById('swapNoResults');
+    list.innerHTML = '';
+    if (!units.length) { list.style.display = 'none'; noRes.style.display = 'block'; return; }
+    list.style.display = 'block'; noRes.style.display = 'none';
+    let lastGroup = null;
+    units.forEach(u => {
+        const group = u.status === 'In Stock' ? 'In Stock' : 'Pre-Sale';
+        if (group !== lastGroup) {
+            lastGroup = group;
+            const hdr = document.createElement('div');
+            hdr.style.cssText = 'padding:6px 14px 4px; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; background:#F5F5F7; border-bottom:1px solid #E8E8ED;';
+            hdr.textContent = group === 'In Stock' ? '⚡ In Stock — Available Now' : '🕐 Pre-Sale';
+            list.appendChild(hdr);
+        }
+        const row = document.createElement('div');
+        row.dataset.unitId = u.id;
+        row.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:10px 14px; cursor:pointer; border-bottom:1px solid #F0F0F5; font-size:13px; transition:background .1s;';
+        row.innerHTML = `<span style="font-weight:500;">${u.design_name} <span style="font-weight:400;color:#6E6E73;">· ${u.size} · ${u.finish}</span></span><span style="font-family:monospace;font-size:12px;color:#6E6E73;">${u.serial_number || '—'}</span>`;
+        row.addEventListener('click', () => {
+            document.querySelectorAll('#swapUnitList [data-unit-id]').forEach(r => r.style.background = '');
+            row.style.background = '#EFF6FF';
+            document.getElementById('swapNewUnitId').value = u.id;
+            document.getElementById('swapSubmit').disabled = false;
+            swapSelectedId = u.id;
+        });
+        list.appendChild(row);
+    });
+}
+
+document.getElementById('swapModal').addEventListener('click', function(e) {
+    if (e.target === this) closeSwap();
+});
+</script>
+{% endblock %}
