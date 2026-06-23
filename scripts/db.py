@@ -7,9 +7,7 @@ All scripts import from here instead of using openpyxl directly.
 import sqlite3
 import os
 
-from constants import _BASE_DIR
-
-DB_PATH = os.path.join(_BASE_DIR, "inventory.db")
+from constants import DB_PATH
 
 CHECKLIST_ITEMS = [
     ("serial_verified",   "Serial number verified against order"),

@@ -6,7 +6,7 @@ _BASE_DIR        = os.path.dirname(_SCRIPTS_DIR)          # inventory_management
 INVENTORY_FILE   = os.path.join(_BASE_DIR, "inventory_master.xlsx")
 MANIFEST_DIR     = os.path.join(_BASE_DIR, "manifests")
 MANIFEST_PATTERN = os.path.join(MANIFEST_DIR, "container_manifest_CNT-*.csv")
-DB_PATH          = os.path.join(_BASE_DIR, "inventory.db")
+DB_PATH          = os.path.join(_BASE_DIR, "data", "inventory.db")
 
 # Column indices (1-based)
 DATA_START  = 3

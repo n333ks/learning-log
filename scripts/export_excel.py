@@ -13,6 +13,7 @@ import datetime
 
 _SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, _SCRIPTS_DIR)
+sys.path.insert(0, os.path.join(_SCRIPTS_DIR, "legacy"))
 
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font, PatternFill, Border, Side
