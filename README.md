@@ -1,139 +1,167 @@
-# Steel Door Inventory Management
+# Inventory Management System
 
-A Python-based inventory management system for a steel door and window 
-import/distribution operation. Built around a central Excel workbook 
-(`inventory_master.xlsx`) that tracks every physical unit from presale 
-through container arrival to in-stock.
-
-## The Problem
-
-Managing inventory across presale, in-transit, and in-stock states for 
-a product catalogue with dozens of variants (design × size × finish × 
-swing × glass type) was entirely manual. Container arrivals required 
-cross-referencing manifests against presale counts, updating quantities 
-by hand, and reconciling serial numbers — a process that took hours and 
-was prone to error.
-
-## The Solution
-
-A suite of Python scripts that automate inventory tracking around a 
-structured Excel workbook:
-
-- **Container arrivals** are processed from a manifest CSV in seconds
-- **Serial numbers** are generated and tracked per unit
-- **Live COUNTIFS formulas** keep QTY columns accurate automatically
-- **Conditional formatting** signals inventory health at a glance
+Flask-based inventory and warehouse management for an iron doors business. Tracks every unit from production order through container arrival, customer allocation, warehouse prep, and final fulfillment.
 
 ---
 
-## Workbook Structure — `inventory_master.xlsx`
+## Running the App
 
-Every row in the workbook represents one physical unit. Columns A–L:
+```bash
+cd inventory_management
+python3 app.py
+```
 
-| Column | Field | Notes |
-|--------|-------|-------|
-| A | Design Name | e.g. Valencia, Sevilla |
-| B | Size | e.g. 36" × 80" |
-| C | Finish | e.g. Matte Black |
-| D | Swing | e.g. Right Inswing |
-| E | Glass Type | e.g. Clear, Frosted |
-| F | In-Stock QTY | COUNTIFS formula (summary row only) |
-| G | In-Production QTY | COUNTIFS formula (summary row only) |
-| H | Pre-Sale QTY | COUNTIFS formula (summary row only) |
-| I | Optimal Count | Target stock level (summary row only) |
-| J | Variance | =F+G+H−I (summary row only) |
-| K | Serial Number | Per-unit identifier |
-| L | Status | In Stock / Pre-Sale / In Production / Allocated - [order#] |
+Opens at `http://localhost:5001`. Default admin login: `admin` / `admin`.
 
-### Row layout
+Dependencies: `flask`, `werkzeug`, `openpyxl`
 
-- **Row 1**: Column headers
-- **Row 2**: Blank spacer
-- **Data rows**: one per physical unit, grouped by variant
+---
 
-Within each variant group the first row is the **summary row** — it 
-carries the COUNTIFS formulas, Optimal Count, and Variance. All 
-subsequent rows in the group (**detail rows**) contain only Serial 
-Number and Status; the variant label cells (A–E) retain their values 
-but display in white font so the repeated text is visually hidden.
+## Unit Lifecycle
 
-Spacing between groups:
-- 1 blank row between variants within the same Design Name
-- 2 blank rows between Design Name blocks
+```
+In Production → Pre-Sale (CNT-XXX) → Allocated → Warehouse (In Prep) → Pending Review → Ready for Pickup / Ready for Delivery
+```
 
-### Conditional formatting
+---
 
-| Status value | Fill color |
+## Features
+
+### Inventory
+- Tracks every physical unit with status, serial number, container, and variant details
+- Allocated units are hidden from the inventory page — only In Stock, Pre-Sale, and In Production are shown
+- Units within each variant group are ordered by serial number ascending (FIFO — earliest serial first)
+- Excel workbook (`inventory_master.xlsx`) stays in sync after every DB mutation
+
+### Sales
+- All orders grouped by order number with expand/collapse to see individual units
+- **Unit Swap**: swap a physical unit on any order — old unit returns to In Stock (warehouse orders) or Pre-Sale/In Stock (pre-arrival orders) based on whether its container has arrived
+- **Cancel Order**: restores unit to correct status
+- **Change Request**: log a customer-initiated change request directly from any order row (see Change Requests below)
+- Fulfillment type badge (🏠 Pickup / 🚚 Delivery) shown on every order
+
+### Warehouse
+Active change requests for orders currently in the warehouse are shown in a yellow alert banner at the top of the page — warehouse staff see them before anything else.
+
+Four sections updated in real time:
+1. **In Prep** — warehouse team works on units, accesses individual prep sheets
+2. **Pending Review** — all units marked ready; office staff reviews before release
+3. **Ready for Pickup** — approved pickup orders
+4. **Ready for Delivery** — approved delivery orders
+
+Office staff can **Accept** (moves to Ready) or **Push Back** (returns to In Prep).
+
+### Warehouse Prep Sheets
+Each unit gets its own prep sheet at `/warehouse/prep/<id>`:
+- 14-item QC checklist with instant AJAX save
+- Photo uploads with lightbox viewer
+- Notes with auto-save on blur
+- Progress bar (checks completed / total)
+- "Mark Ready" button appears when all 14 items are checked → sets unit to Pending Review
+
+### Order Summary Page
+Per-order summary at `/warehouse/order/<order_number>`:
+- All units in the order with individual progress bars and notes
+- All photos from all units in one grid, labeled by serial number
+- Links to each unit's individual prep sheet
+
+### Change Requests
+Tracks customer-initiated change requests through a structured procedure. Accessible at `/change-requests` (admin only).
+
+**How it works:**
+- Click "Change Request" on any order in the Sales tab
+- The app auto-detects the order's current location in the pipeline and resolves the applicable scenario without asking unnecessary questions
+- For orders still in house (In Prep, Pending Review, or still in sales_orders), scenario **1A** is auto-assigned
+- For orders marked Ready for Pickup or Ready for Delivery, a single follow-up question determines the scenario
+
+**Scenarios (Stock / Presale Orders):**
+| Scenario | Situation | Outcome |
+|---|---|---|
+| 1A | Still in the warehouse | Change can be made |
+| 1B | Shipped via LTL | Reversal possible — fees apply |
+| 1C | Shipped via non-LTL | No reversal — 25% restocking fee |
+| 1D | Picked up or locally delivered | 25% restocking fee |
+
+Each change request detail page shows:
+- CS steps, warehouse actions, and owner verification checklist for the applicable scenario
+- The current units on the order with a **Swap Unit** picker to execute the inventory change in the same view
+- Status tracking (Open → In Progress → Resolved) with resolution notes
+- Non-negotiables reminder
+
+Active (unresolved) change requests for warehouse orders surface automatically on the Warehouse page.
+
+### Activity Log (Admin)
+Append-only audit trail at `/admin/activity`:
+- Logs every checklist action, photo upload/delete, notes save, Mark Ready, cancel, unit swap, change request creation/update, and sign-in
+- Filterable by user
+
+### Users (Admin)
+- Two roles: `admin` (full access) and `warehouse` (warehouse tab only, read-only on change requests)
+- Create users, reset passwords, delete users at `/admin/users`
+
+### Containers
+- Upload container manifests (CSV) to parse serials and update inventory
+- Receive a container to move Allocated units → Warehouse and Pre-Sale units → In Stock
+
+### Purchase Orders
+- Auto-generated from variants with negative variance (stock below optimal count)
+- Seeds In Production units for each line item
+- Downloadable as CSV with unit cost and retail price
+
+### Quarterly Review
+- Forecasts suggested optimal counts per variant based on sales velocity
+- Confidence rating (High / Medium / Low / No data) based on days of sales history
+- Editable optimal counts saved directly to the DB
+
+---
+
+## Database Tables
+
+| Table | Purpose |
 |---|---|
-| In Stock | Green |
-| Pre-Sale | Yellow |
-| In Production | Red |
-| Allocated - [any] | Blue |
-| Variance < 0 | Red fill + red font |
+| `units` | Every physical unit |
+| `variants` | Unique design/size/finish/swing/glass combos |
+| `sales_orders` | Pre-arrival customer allocations |
+| `warehouse` | Units that have arrived and are being prepped |
+| `warehouse_checklist` | 14-item QC checklist per unit |
+| `warehouse_photos` | Photos per unit |
+| `change_requests` | Customer change request log with scenario, procedure steps, and resolution |
+| `users` | Auth — admin or warehouse role |
+| `activity_log` | Audit trail |
 
 ---
 
-## Scripts
+## Serial Number Format
 
-### Day-to-day operations
-
-**`inventory_update.py`** — Process a container arrival.  
-Reads `container_manifest.csv`, decrements the matching container's 
-Pre-Sale QTY, and moves units to In Stock. Writes serial numbers to 
-new detail rows if provided.
-
-```bash
-python3 inventory_update.py --container CNT-001
-python3 inventory_update.py --container CNT-002 --manifest my_manifest.csv
+```
+YY-MMDD-####
 ```
 
-The manifest CSV requires these columns:
-`Design Name, Size, Finish, Swing, Glass Type, Quantity, Serial Numbers`
-(Serial Numbers is semicolon-separated, optional.)
+Year ordered, date (MMDD), sequential number resetting each year. Example: `26-0618-0023` = ordered in 2026, June 18, sequential #23. Units are displayed and fulfilled in serial number order (FIFO).
 
 ---
 
-**`fix_inventory_formatting.py`** — Reapply borders and conditional formatting.  
-Run this after manually adding or removing rows in Excel to redraw 
-design-block borders and ensure CF ranges are correct.
+## SKU Format
 
-```bash
-python3 fix_inventory_formatting.py
+```
+DESIGN-WxH-FINISH-SWING-GLASS
 ```
 
+Example: `VAL-36X80-MB-RI-CLR` = Valencia Single Door, 36×80, Matte Black, Right Inswing, Clear.
+
+Design codes: ALT · CAD · COR · GRN · MAL · MAR · RON · SEG · SEV · TOL · VAL
+
 ---
 
-### Setup / rebuild
+## Legacy Excel Scripts
 
-**`rebuild_inventory.py`** — Full workbook rebuild.  
-Reads the current file, preserves all In Stock serials, and writes a 
-fresh `inventory_master.xlsx` with the correct flat per-unit structure, 
-COUNTIFS formulas, CF rules, and borders.
+Scripts in `scripts/` predate the Flask app and operate directly on `inventory_master.xlsx`. Still useful for bulk operations:
 
 ```bash
-python3 rebuild_inventory.py
+python3 scripts/parse_manifest.py       # parse container manifest → update Excel
+python3 scripts/sort_inventory.py       # re-sort design blocks alphabetically
+python3 scripts/refresh_counts.py       # recalculate QTY counts and variance
+python3 scripts/apply_status_fills.py   # reapply colors + column widths
 ```
 
----
-
-### One-time migration scripts
-
-These were run in sequence to build the current workbook and should not 
-need to be run again under normal operation. They are kept for reference.
-
-| Script | Purpose |
-|--------|---------|
-| `create_inventory_master.py` | Generated the original template with sample product data |
-| `seed_initial_inventory.py` | Seeded In Stock serial numbers for products with existing stock |
-| `add_row_spacing.py` | Inserted blank rows between variant groups and Design Name blocks |
-| `fix_summary_rows.py` | Corrected COUNTIFS formula placement (summary rows only) and fixed row reference offsets introduced by row insertions |
-| `fix_detail_rows.py` | Set white font on repeated variant labels in detail rows; cleared Optimal Count from detail rows |
-| `apply_status_fills.py` | Early attempt at static status fills — superseded by CF rules in `fix_inventory_formatting.py` |
-
----
-
-## Tech Stack
-
-- Python 3
-- openpyxl (Excel workbook read/write, conditional formatting, borders)
-- Built with AI-assisted development
+`scripts/constants.py` is the single source of truth for file paths, column indices, and the SKU map.
