@@ -4,7 +4,7 @@
 {% block page_title %}Prep Sheet{% endblock %}
 
 {% block page_actions %}
-<div style="display:flex; gap:10px; align-items:center;">
+<div class="page-actions-row">
     {% if unit.status == 'Ready for Pickup' %}
         <span class="badge badge-in-stock" style="font-size:13px; padding:6px 14px;">✓ Ready for Pickup</span>
     {% elif done == total and total > 0 %}
@@ -22,66 +22,66 @@
 
 <!-- Unit Header -->
 <div class="card" style="margin-bottom:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:16px;">
+    <div class="prep-header-row">
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Order</p>
-            <p style="font-size:20px; font-weight:700; font-family:monospace; color:#1D1D1F; margin:0;">{{ unit.order_number }}</p>
+            <p class="field-label">Order</p>
+            <p class="field-value field-value-lg">{{ unit.order_number }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Customer</p>
-            <p style="font-size:16px; font-weight:500; color:#1D1D1F; margin:0;">{{ unit.customer or '—' }}</p>
+            <p class="field-label">Customer</p>
+            <p class="field-value field-value-md">{{ unit.customer or '—' }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Date Arrived</p>
-            <p style="font-size:15px; color:#1D1D1F; margin:0;">{{ unit.date_arrived or '—' }}</p>
+            <p class="field-label">Date Arrived</p>
+            <p class="field-value" style="font-size:15px;">{{ unit.date_arrived or '—' }}</p>
         </div>
     </div>
 
-    <!-- Unit detail -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(140px,1fr)); gap:20px; margin-top:16px; border-top:1px solid #E8E8ED; padding-top:16px;">
+    <div class="prep-detail-grid">
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Serial #</p>
-            <p style="font-size:14px; font-weight:500; font-family:monospace; color:#1D1D1F; margin:0;">{{ unit.serial_number }}</p>
+            <p class="field-label">Serial #</p>
+            <p class="field-value field-value-mono">{{ unit.serial_number }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Design</p>
-            <p style="font-size:14px; font-weight:500; color:#1D1D1F; margin:0;">{{ unit.design_name }}</p>
+            <p class="field-label">Design</p>
+            <p class="field-value">{{ unit.design_name }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Size</p>
-            <p style="font-size:14px; font-weight:500; color:#1D1D1F; margin:0;">{{ unit.size }}</p>
+            <p class="field-label">Size</p>
+            <p class="field-value">{{ unit.size }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Finish</p>
-            <p style="font-size:14px; font-weight:500; color:#1D1D1F; margin:0;">{{ unit.finish }}</p>
+            <p class="field-label">Finish</p>
+            <p class="field-value">{{ unit.finish }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Glass Type</p>
-            <p style="font-size:14px; font-weight:500; color:#1D1D1F; margin:0;">{{ unit.glass_type or '—' }}</p>
+            <p class="field-label">Glass Type</p>
+            <p class="field-value">{{ unit.glass_type or '—' }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">Container</p>
-            <p style="font-size:14px; font-weight:500; font-family:monospace; color:#1D1D1F; margin:0;">{{ unit.container_id or '—' }}</p>
+            <p class="field-label">Container</p>
+            <p class="field-value field-value-mono">{{ unit.container_id or '—' }}</p>
         </div>
         <div>
-            <p style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:#6E6E73; margin:0 0 4px;">SKU</p>
-            <p style="font-size:14px; font-weight:500; font-family:monospace; color:#1D1D1F; margin:0;">{{ unit.sku or '—' }}</p>
+            <p class="field-label">SKU</p>
+            <p class="field-value field-value-mono">{{ unit.sku or '—' }}</p>
         </div>
     </div>
 </div>
 
 <!-- Progress Bar -->
-<div style="margin-bottom:20px;">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-        <span style="font-size:13px; font-weight:600; color:#1D1D1F;">Inspection Progress</span>
-        <span style="font-size:13px; color:#6E6E73;" id="progressLabel">{{ done }} of {{ total }} complete</span>
+<div class="prep-progress">
+    <div class="prep-progress-header">
+        <span class="prep-progress-label">Inspection Progress</span>
+        <span class="prep-progress-count" id="progressLabel">{{ done }} of {{ total }} complete</span>
     </div>
-    <div style="background:#E8E8ED; border-radius:99px; height:8px; overflow:hidden;">
-        <div id="progressBar" style="background:{% if pct == 100 %}#34C759{% else %}#0071E3{% endif %}; height:100%; border-radius:99px; width:{{ pct }}%; transition:width .3s ease;"></div>
+    <div class="prep-progress-track">
+        <div id="progressBar" class="prep-progress-bar"
+             style="background:{% if pct == 100 %}#34C759{% else %}#0071E3{% endif %}; width:{{ pct }}%;"></div>
     </div>
 </div>
 
-<div class="two-col" style="gap:20px; align-items:start;">
+<div class="two-col">
 
 <!-- Checklist -->
 <div class="card">
@@ -95,28 +95,27 @@
     {% for item in checklist %}
         {% set _ = checklist_map.d.update({item.item_key: item}) %}
     {% endfor %}
-    <div style="display:flex; flex-direction:column; gap:2px;">
+    <div class="checklist-list">
         {% for key, label in checklist_items %}
             {% set item = checklist_map.d.get(key) %}
             {% set checked = item and item.completed %}
             <label class="checklist-item {% if checked %}checklist-done{% endif %}"
                    data-key="{{ key }}"
                    style="display:flex; align-items:flex-start; gap:12px; padding:12px 0; border-bottom:1px solid #F0F0F5; cursor:pointer;">
-                <div class="checklist-box {% if checked %}checklist-box-checked{% endif %}" style="flex-shrink:0; margin-top:1px;">
+                <div class="checklist-box {% if checked %}checklist-box-checked{% endif %}" style="margin-top:1px;">
                     {% if checked %}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
                         <polyline points="20,6 9,17 4,12"/>
                     </svg>
                     {% endif %}
                 </div>
-                <div style="flex:1;">
-                    <span style="font-size:14px; color:{% if checked %}#8E8E93{% else %}#1D1D1F{% endif %}; {% if checked %}text-decoration:line-through;{% endif %}">
+                <div class="checklist-content">
+                    <span class="checklist-text"
+                          style="color:{% if checked %}#8E8E93{% else %}#1D1D1F{% endif %}; {% if checked %}text-decoration:line-through;{% endif %}">
                         {{ label }}
                     </span>
                     {% if is_admin and item and item.completed and item.completed_by %}
-                    <span style="display:block; font-size:11px; color:#8E8E93; margin-top:2px;">
-                        ✓ {{ item.completed_by }} · {{ item.completed_at }}
-                    </span>
+                    <span class="checklist-meta">✓ {{ item.completed_by }} · {{ item.completed_at }}</span>
                     {% endif %}
                 </div>
             </label>
@@ -125,7 +124,7 @@
 </div>
 
 <!-- Right column: photos + notes -->
-<div style="display:flex; flex-direction:column; gap:20px;">
+<div class="prep-right-col">
 
     <!-- Photo Upload -->
     <div class="card">
@@ -135,44 +134,49 @@
         </div>
 
         {% if photos %}
-        <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; margin-bottom:16px;">
+        {% set photo_srcs = [] %}
+        {% set photo_caps = [] %}
+        {% for photo in photos %}
+            {% set _ = photo_srcs.append('/static/uploads/' ~ unit.id ~ '/' ~ photo.filename) %}
+            {% set _ = photo_caps.append(photo.caption or '') %}
+        {% endfor %}
+        <div class="photo-grid">
             {% for photo in photos %}
-            <div style="position:relative; border-radius:10px; overflow:hidden; background:#F5F5F7;">
-                <img src="{{ url_for('static', filename='uploads/' ~ unit.id ~ '/' ~ photo.filename) }}"
+            <div class="photo-item">
+                <img class="photo-img"
+                     src="{{ url_for('static', filename='uploads/' ~ unit.id ~ '/' ~ photo.filename) }}"
                      alt="{{ photo.caption or 'Photo' }}"
-                     style="width:100%; aspect-ratio:4/3; object-fit:cover; display:block; cursor:pointer;"
-                     onclick="openLightbox(this.src)">
+                     onclick='openLightbox({{ photo_srcs | tojson }}, {{ photo_caps | tojson }}, {{ loop.index0 }})'>
                 {% if photo.caption %}
-                <p style="font-size:11px; color:#6E6E73; padding:6px 8px; margin:0; background:#fff;">{{ photo.caption }}</p>
+                <p class="photo-caption-text">{{ photo.caption }}</p>
                 {% endif %}
                 {% if is_admin %}
-                <form method="POST" action="{{ url_for('warehouse_photo_delete', wh_id=unit.id, photo_id=photo.id) }}"
-                      style="position:absolute; top:6px; right:6px;"
+                <form class="photo-delete-form" method="POST"
+                      action="{{ url_for('warehouse_photo_delete', wh_id=unit.id, photo_id=photo.id) }}"
                       onsubmit="return confirm('Delete this photo?')">
-                    <button type="submit" style="background:rgba(0,0,0,0.5); border:none; border-radius:50%; width:26px; height:26px; color:#fff; cursor:pointer; font-size:16px; line-height:1; display:flex; align-items:center; justify-content:center;">&times;</button>
+                    <button type="submit" class="photo-delete-btn">&times;</button>
                 </form>
                 {% endif %}
-                <p style="font-size:10px; color:#8E8E93; padding:0 8px 6px; margin:0;">{{ photo.uploaded_by }} · {{ photo.uploaded_at }}</p>
+                <p class="photo-meta">{{ photo.uploaded_by }} · {{ photo.uploaded_at }}</p>
             </div>
             {% endfor %}
         </div>
         {% endif %}
 
-        <form method="POST" action="{{ url_for('warehouse_prep_photo', wh_id=unit.id) }}" enctype="multipart/form-data">
-            <div style="border:2px dashed #D2D2D7; border-radius:10px; padding:20px; text-align:center; margin-bottom:12px; cursor:pointer;" onclick="document.getElementById('photoInput').click()">
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5" style="margin-bottom:8px;">
+        <form method="POST" action="{{ url_for('warehouse_prep_photo', wh_id=unit.id) }}" enctype="multipart/form-data" id="photoForm">
+            <div id="dropZone" class="drop-zone" onclick="document.getElementById('photoInput').click()">
+                <svg class="drop-zone-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
                     <circle cx="8.5" cy="8.5" r="1.5"/>
                     <polyline points="21,15 16,10 5,21"/>
                 </svg>
-                <p style="font-size:13px; color:#6E6E73; margin:0 0 4px;">Click to select a photo</p>
-                <p style="font-size:11px; color:#8E8E93; margin:0;">JPG, PNG, or WebP</p>
+                <p id="dropZoneText" class="drop-zone-text">Drag & drop or click to select</p>
+                <p class="drop-zone-hint">JPG, PNG, or WebP</p>
                 <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="updatePhotoLabel(this)">
-                <p id="photoLabel" style="font-size:12px; color:#0071E3; margin:6px 0 0; display:none;"></p>
+                <p id="photoLabel" class="drop-zone-filename"></p>
             </div>
-            <input type="text" name="caption" placeholder="Optional caption…"
-                   style="width:100%; box-sizing:border-box; padding:9px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:13px; margin-bottom:10px; outline:none;">
-            <button type="submit" class="btn btn-primary" style="width:100%;">Upload Photo</button>
+            <input type="text" name="caption" placeholder="Optional caption…" class="caption-input">
+            <button type="submit" class="btn btn-primary btn-full">Upload Photo</button>
         </form>
     </div>
 
@@ -180,21 +184,16 @@
     <div class="card">
         <div class="card-header">
             <h2 class="card-title">Notes</h2>
-            <span id="notesSaved" style="font-size:12px; color:#34C759; display:none;">Saved</span>
+            <span id="notesSaved" class="notes-saved">Saved</span>
         </div>
-        <textarea id="notesField" rows="5"
-                  style="width:100%; box-sizing:border-box; padding:10px 12px; border:1.5px solid #D2D2D7; border-radius:8px; font-size:14px; resize:vertical; outline:none; font-family:inherit;"
+        <textarea id="notesField" rows="5" class="notes-textarea"
                   placeholder="Add notes about this unit, issues found, special instructions…">{{ unit.notes or '' }}</textarea>
-        <button onclick="saveNotes()" class="btn btn-secondary" style="width:100%; margin-top:10px;">Save Notes</button>
+        <button onclick="saveNotes()" class="btn btn-secondary btn-full" style="margin-top:10px;">Save Notes</button>
     </div>
 
 </div>
 </div>
 
-<!-- Lightbox -->
-<div id="lightbox" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:2000; align-items:center; justify-content:center;" onclick="closeLightbox()">
-    <img id="lightboxImg" src="" style="max-width:90vw; max-height:90vh; border-radius:8px; object-fit:contain;">
-</div>
 
 <script>
 const WH_ID = {{ unit.id }};
@@ -246,17 +245,42 @@ async function saveNotes() {
 }
 document.getElementById('notesField').addEventListener('blur', saveNotes);
 
-// ── Photo upload ───────────────────────────────────────────────────────────────
+// ── Photo upload + drag-and-drop ───────────────────────────────────────────────
 function updatePhotoLabel(input) {
     const label = document.getElementById('photoLabel');
-    if (input.files.length) { label.textContent = input.files[0].name; label.style.display = 'block'; }
+    const text  = document.getElementById('dropZoneText');
+    if (input.files.length) {
+        label.textContent = input.files[0].name;
+        label.style.display = 'block';
+        text.textContent = 'File selected';
+    }
 }
 
-// ── Lightbox ───────────────────────────────────────────────────────────────────
-function openLightbox(src) {
-    document.getElementById('lightboxImg').src = src;
-    document.getElementById('lightbox').style.display = 'flex';
-}
-function closeLightbox() { document.getElementById('lightbox').style.display = 'none'; }
+(function () {
+    const zone  = document.getElementById('dropZone');
+    const input = document.getElementById('photoInput');
+    if (!zone) return;
+
+    zone.addEventListener('dragover', e => {
+        e.preventDefault();
+        zone.style.borderColor = '#0071E3';
+        zone.style.background  = '#F0F7FF';
+    });
+    zone.addEventListener('dragleave', () => {
+        zone.style.borderColor = '#D2D2D7';
+        zone.style.background  = '';
+    });
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.style.borderColor = '#D2D2D7';
+        zone.style.background  = '';
+        const files = e.dataTransfer.files;
+        if (files.length) {
+            input.files = files;
+            updatePhotoLabel(input);
+        }
+    });
+})();
+
 </script>
 {% endblock %}

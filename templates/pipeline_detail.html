@@ -7,513 +7,14 @@
 {% endblock %}
 
 {% block content %}
-<style>
-/* ── Layout: push main content right to make room for stage sidebar ── */
-.page-layout {
-    display: grid;
-    grid-template-columns: 1fr minmax(380px, 36%);
-    gap: 24px;
-    align-items: start;
-    margin-left: 216px; /* stage sidebar width */
-}
-.detail-grid { display: contents; }
-
-/* ── Stage Sidebar: fixed panel flush with the main nav ── */
-.stage-sidebar {
-    position: fixed;
-    top: 0;
-    left: 240px; /* right after the main nav */
-    width: 216px;
-    height: 100vh;
-    background: #F9F9F9;
-    border-right: 1px solid #E5E5EA;
-    display: flex;
-    flex-direction: column;
-    z-index: 100;
-    overflow: hidden;
-}
-.stage-sidebar-header {
-    padding: 16px 16px 12px;
-    border-bottom: 1px solid #E5E5EA;
-    flex-shrink: 0;
-}
-.stage-sidebar-back {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    font-size: 12px;
-    color: #0071E3;
-    text-decoration: none;
-    margin-bottom: 12px;
-    font-weight: 500;
-}
-.stage-sidebar-back:hover { text-decoration: underline; }
-.stage-sidebar-label {
-    font-size: 13px;
-    font-weight: 700;
-    color: #1D1D1F;
-}
-.stage-sidebar-count {
-    font-size: 11px;
-    color: #AEAEB2;
-    margin-top: 2px;
-}
-.sidebar-list {
-    overflow-y: auto;
-    flex: 1;
-}
-.sidebar-item {
-    display: block;
-    padding: 11px 16px;
-    border-bottom: 1px solid #EFEFEF;
-    text-decoration: none;
-    color: inherit;
-    transition: background 0.1s;
-}
-.sidebar-item:last-child { border-bottom: none; }
-.sidebar-item:hover { background: #F0F0F5; }
-.sidebar-item.active {
-    background: #EFF6FF;
-    border-left: 3px solid #0071E3;
-    padding-left: 13px;
-}
-.si-order {
-    font-family: 'SF Mono','Menlo',monospace;
-    font-size: 11px;
-    font-weight: 700;
-    color: #6E6E73;
-}
-.sidebar-item.active .si-order { color: #0071E3; }
-.si-customer {
-    font-size: 12px;
-    font-weight: 500;
-    color: #1D1D1F;
-    margin-top: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.si-meta {
-    font-size: 11px;
-    color: #AEAEB2;
-    margin-top: 2px;
-}
-
-@media (max-width: 1100px) {
-    .stage-sidebar { display: none; }
-    .page-layout { margin-left: 0; }
-}
-
-/* ── Cards ── */
-.card {
-    background: #fff;
-    border: 1px solid #E5E5EA;
-    border-radius: 12px;
-    overflow: hidden;
-    margin-bottom: 20px;
-}
-.card-header {
-    padding: 14px 18px;
-    border-bottom: 1px solid #F2F2F7;
-    font-size: 13px;
-    font-weight: 600;
-    color: #1D1D1F;
-    background: #FAFAFA;
-}
-.card-body { padding: 18px; }
-
-/* ── Banner ── */
-.order-banner {
-    background: #fff;
-    border: 1px solid #E5E5EA;
-    border-radius: 12px;
-    padding: 22px 28px;
-    margin-bottom: 24px;
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    gap: 0;
-}
-.banner-identity {
-    padding-right: 28px;
-    border-right: 1px solid #E5E5EA;
-}
-.banner-customer {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1D1D1F;
-    line-height: 1.2;
-}
-.banner-order-num {
-    font-family: 'SF Mono','Menlo',monospace;
-    font-size: 12px;
-    color: #AEAEB2;
-    margin-top: 3px;
-}
-.banner-stats {
-    display: flex;
-    align-items: stretch;
-    justify-content: space-around;
-    padding: 0 28px;
-}
-.banner-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    padding: 0 20px;
-    border-right: 1px solid #F2F2F7;
-    text-align: center;
-}
-.banner-stat:last-child { border-right: none; }
-.banner-stat-label {
-    font-size: 10px;
-    font-weight: 600;
-    color: #AEAEB2;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    white-space: nowrap;
-}
-.banner-stat-value {
-    font-size: 15px;
-    font-weight: 700;
-    color: #1D1D1F;
-    white-space: nowrap;
-}
-.banner-stat-value.muted { font-size: 13px; color: #6E6E73; font-weight: 500; }
-.banner-stage {
-    padding-left: 28px;
-    border-left: 1px solid #E5E5EA;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 8px;
-}
-.stage-pill {
-    display: inline-flex;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 20px;
-    white-space: nowrap;
-}
-.stage-pill.presale        { background:#FFF8E1; color:#F57F17; }
-.stage-pill.allocated      { background:#E3F2FD; color:#1565C0; }
-.stage-pill.in_prep        { background:#EDE7F6; color:#5E35B1; }
-.stage-pill.pending_review { background:#FFF3E0; color:#E65100; }
-.stage-pill.ready_pickup   { background:#E8F5E9; color:#2E7D32; }
-.stage-pill.ready_delivery { background:#E0F7FA; color:#00838F; }
-.stage-pill.fulfilled      { background:#F3E5F5; color:#6A1B9A; }
-.fulfillment-label {
-    font-size: 11px;
-    color: #8E8E93;
-    font-weight: 500;
-}
-
-/* ── Timeline ── */
-.timeline {
-    display: flex;
-    align-items: center;
-    gap: 0;
-    margin-bottom: 24px;
-}
-.tl-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    flex: 1;
-}
-.tl-step:not(:last-child)::after {
-    content: '';
-    position: absolute;
-    top: 13px;
-    left: 50%;
-    right: -50%;
-    height: 2px;
-    background: #E5E5EA;
-    z-index: 0;
-}
-.tl-step.done::after  { background: #34C759; }
-.tl-dot {
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 2px solid #E5E5EA;
-    background: #fff;
-    z-index: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #AEAEB2;
-    margin-bottom: 6px;
-}
-.tl-step.done .tl-dot    { border-color:#34C759; background:#34C759; color:#fff; }
-.tl-step.current .tl-dot { border-color:#0071E3; background:#0071E3; color:#fff; }
-.tl-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #AEAEB2;
-    text-align: center;
-    white-space: nowrap;
-}
-.tl-step.done .tl-label    { color: #34C759; }
-.tl-step.current .tl-label { color: #0071E3; }
-.tl-date {
-    font-size: 10px;
-    color: #AEAEB2;
-    text-align: center;
-    margin-top: 2px;
-    white-space: nowrap;
-}
-
-/* ── Units table ── */
-.units-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-}
-.units-table th {
-    text-align: left;
-    font-size: 11px;
-    font-weight: 600;
-    color: #8E8E93;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    padding: 8px 10px;
-    border-bottom: 1px solid #F2F2F7;
-}
-.units-table td {
-    padding: 10px 10px;
-    border-bottom: 1px solid #F2F2F7;
-    color: #1D1D1F;
-    vertical-align: top;
-}
-.units-table tr:last-child td { border-bottom: none; }
-.serial-num {
-    font-family: 'SF Mono','Menlo',monospace;
-    font-size: 12px;
-    font-weight: 600;
-}
-.container-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    padding: 2px 6px;
-    border-radius: 6px;
-    background: #F2F2F7;
-    color: #6E6E73;
-    margin-top: 4px;
-    font-family: 'SF Mono','Menlo',monospace;
-}
-
-/* ── Status badges ── */
-.status-badge {
-    display: inline-block;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 8px;
-    white-space: nowrap;
-}
-.status-ready    { background:#E8F5E9; color:#2E7D32; }
-.status-prep     { background:#EDE7F6; color:#5E35B1; }
-.status-review   { background:#FFF3E0; color:#E65100; }
-.status-allocated{ background:#E3F2FD; color:#1565C0; }
-.status-presale  { background:#FFF8E1; color:#F57F17; }
-.status-default  { background:#F2F2F7; color:#3A3A3C; }
-
-/* ── Checklist toggle ── */
-.checklist-toggle {
-    background: none;
-    border: none;
-    font-size: 11px;
-    color: #0071E3;
-    cursor: pointer;
-    padding: 4px 0 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-}
-.checklist-toggle:hover { text-decoration: underline; }
-.checklist-panel {
-    display: none;
-    margin-top: 10px;
-    border: 1px solid #E5E5EA;
-    border-radius: 8px;
-    overflow: hidden;
-}
-.checklist-panel.open { display: block; }
-.cl-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 10px;
-    font-size: 12px;
-    color: #3A3A3C;
-    border-bottom: 1px solid #F2F2F7;
-}
-.cl-row:last-child { border-bottom: none; }
-.cl-row.checked { color: #1D1D1F; }
-.cl-check {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    border: 1.5px solid #D1D1D6;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.cl-check.done { background:#34C759; border-color:#34C759; color:#fff; font-size:10px; }
-
-/* ── Prep photos ── */
-.prep-photos-grid {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    margin-top: 10px;
-}
-.prep-photo-thumb {
-    width: 64px;
-    height: 64px;
-    border-radius: 6px;
-    object-fit: cover;
-    border: 1px solid #E5E5EA;
-}
-
-/* ── Contact form ── */
-.form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 12px;
-}
-.form-group { display: flex; flex-direction: column; gap: 4px; }
-.form-group.full { grid-column: 1 / -1; }
-.form-group label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #6E6E73;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-.form-group input,
-.form-group textarea {
-    padding: 8px 10px;
-    border: 1px solid #D1D1D6;
-    border-radius: 8px;
-    font-size: 13px;
-    color: #1D1D1F;
-    background: #fff;
-    outline: none;
-    transition: border-color 0.15s;
-}
-.form-group input:focus,
-.form-group textarea:focus { border-color: #0071E3; }
-.form-group textarea { resize: vertical; min-height: 72px; }
-.btn-save {
-    background: #0071E3;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 8px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    cursor: pointer;
-}
-.btn-save:hover { background: #0077ED; }
-
-/* ── Photos grid ── */
-.photos-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 10px;
-    margin-bottom: 16px;
-}
-.photo-item {
-    position: relative;
-    border-radius: 8px;
-    overflow: hidden;
-    background: #F2F2F7;
-}
-.photo-item img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    display: block;
-}
-.photo-caption {
-    font-size: 10px;
-    color: #6E6E73;
-    padding: 3px 4px;
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-.photo-delete {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    background: rgba(0,0,0,0.55);
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-}
-.photo-delete:hover { background: rgba(200,0,0,0.75); }
-.upload-row {
-    display: flex;
-    gap: 8px;
-    flex-wrap: wrap;
-    align-items: flex-end;
-}
-.upload-row input[type="file"] { font-size: 12px; flex: 1; min-width: 140px; }
-.upload-row input[type="text"] {
-    padding: 7px 10px;
-    border: 1px solid #D1D1D6;
-    border-radius: 8px;
-    font-size: 12px;
-    flex: 1;
-    min-width: 100px;
-}
-.btn-upload {
-    background: #34C759;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    padding: 7px 14px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap;
-}
-.btn-upload:hover { background: #30B352; }
-</style>
-
 {% set stage_labels = {'presale':'Pre-Sale','allocated':'Allocated','in_prep':'In Prep','pending_review':'Pending Review','ready_pickup':'Ready for Pickup','ready_delivery':'Ready for Delivery','fulfilled':'Fulfilled'} %}
 
 <!-- ── Full-width banner ── -->
 <div class="order-banner">
-
-    <!-- Left: identity -->
     <div class="banner-identity">
         <div class="banner-customer">{{ detail.customer }}</div>
         <div class="banner-order-num">{{ order_number }}</div>
     </div>
-
-    <!-- Center: stats -->
     <div class="banner-stats">
         <div class="banner-stat">
             <span class="banner-stat-label">Units</span>
@@ -521,7 +22,7 @@
         </div>
         <div class="banner-stat">
             <span class="banner-stat-label">Fulfillment</span>
-            <span class="banner-stat-value" style="font-size:13px;">{% if detail.fulfillment_type == 'delivery' %}🚚 Delivery{% else %}🏠 Pickup{% endif %}</span>
+            <span class="banner-stat-value sm">{% if detail.fulfillment_type == 'delivery' %}🚚 Delivery{% else %}🏠 Pickup{% endif %}</span>
         </div>
         <div class="banner-stat">
             <span class="banner-stat-label">Allocated</span>
@@ -540,17 +41,12 @@
         </div>
         {% endif %}
     </div>
-
-    <!-- Right: stage + warehouse link -->
     <div class="banner-stage">
         <span class="stage-pill {{ detail.stage }}">{{ stage_labels.get(detail.stage, detail.stage) }}</span>
         {% if detail.first_wh_id %}
-        <a href="{{ url_for('warehouse_prep', wh_id=detail.first_wh_id) }}" style="font-size:11px; color:#0071E3; text-decoration:none; font-weight:500; white-space:nowrap;">
-            View Prep →
-        </a>
+        <a href="{{ url_for('warehouse_prep', wh_id=detail.first_wh_id) }}" class="view-prep-link">View Prep →</a>
         {% endif %}
     </div>
-
 </div>
 
 <!-- ── Timeline ── -->
@@ -567,7 +63,7 @@
 <!-- ── Three-column layout ── -->
 <div class="page-layout">
 
-<!-- Stage sidebar: fixed full-height panel -->
+<!-- Stage sidebar -->
 <div class="stage-sidebar">
     <div class="stage-sidebar-header">
         <a href="{{ url_for('pipeline') }}" class="stage-sidebar-back">
@@ -589,14 +85,14 @@
     </div>
 </div>
 
-<!-- Main content (left + right columns) -->
+<!-- Main content -->
 <div class="detail-grid">
 
     <!-- Left: Units + Change Orders -->
     <div>
         <div class="card">
             <div class="card-header">Units</div>
-            <div style="overflow-x:auto;">
+            <div class="table-scroll">
                 <table class="units-table">
                     <thead>
                         <tr>
@@ -617,12 +113,12 @@
                                 <div>
                                     <span class="container-tag">{{ unit.container_id }}</span>
                                     {% if unit.container_eta %}
-                                    <span style="font-size:10px; color:#6E6E73; margin-left:4px;">ETA {{ unit.container_eta }}</span>
+                                    <span class="container-eta">ETA {{ unit.container_eta }}</span>
                                     {% endif %}
                                 </div>
                                 {% endif %}
                             </td>
-                            <td style="color:#3A3A3C;">
+                            <td class="spec-cell">
                                 {{ unit.design_name }} · {{ unit.size }} · {{ unit.finish }}
                                 {% if unit.swing %} · {{ unit.swing }}{% endif %}
                                 {% if unit.glass_type %} · {{ unit.glass_type }}{% endif %}
@@ -646,26 +142,27 @@
                                     </div>
                                 </div>
                                 {% if unit.prep_photos %}
+                                {% set pp_srcs = [] %}
+                                {% set pp_caps = [] %}
+                                {% for p in unit.prep_photos %}
+                                    {% set _ = pp_srcs.append('/static/uploads/' ~ unit.warehouse_id ~ '/' ~ p.filename) %}
+                                    {% set _ = pp_caps.append(p.caption or '') %}
+                                {% endfor %}
                                 <div class="prep-photos-grid">
                                     {% for p in unit.prep_photos %}
-                                    <a href="{{ url_for('static', filename='uploads/' ~ unit.warehouse_id ~ '/' ~ p.filename) }}" target="_blank">
-                                        <img class="prep-photo-thumb" src="{{ url_for('static', filename='uploads/' ~ unit.warehouse_id ~ '/' ~ p.filename) }}" alt="prep photo">
-                                    </a>
+                                    <img class="prep-photo-thumb" src="{{ url_for('static', filename='uploads/' ~ unit.warehouse_id ~ '/' ~ p.filename) }}" alt="prep photo"
+                                         onclick='openLightbox({{ pp_srcs | tojson }}, {{ pp_caps | tojson }}, {{ loop.index0 }})'>
                                     {% endfor %}
                                 </div>
                                 {% endif %}
                                 {% endif %}
                             </td>
-                            <td>
-                                <span style="font-family:'SF Mono','Menlo',monospace; font-size:11px; color:#6E6E73;">{{ unit.sku or '—' }}</span>
-                            </td>
-                            <td style="min-width:140px;">
+                            <td><span class="sku-cell">{{ unit.sku or '—' }}</span></td>
+                            <td class="notes-td">
                                 {% if unit.notes %}
-                                <div style="font-size:12px; color:#3A3A3C; background:#FFFBF0; border:1px solid #FFE58F; border-radius:6px; padding:5px 8px; line-height:1.4;">
-                                    {{ unit.notes }}
-                                </div>
+                                <div class="unit-note">{{ unit.notes }}</div>
                                 {% else %}
-                                <span style="font-size:12px; color:#DADADF;">—</span>
+                                <span class="empty-note">—</span>
                                 {% endif %}
                             </td>
                             <td>
@@ -686,7 +183,7 @@
                             </td>
                         </tr>
                     {% else %}
-                        <tr><td colspan="5" style="color:#AEAEB2; text-align:center; padding:20px;">No units found.</td></tr>
+                        <tr><td colspan="5" class="table-empty">No units found.</td></tr>
                     {% endfor %}
                     </tbody>
                 </table>
@@ -696,51 +193,51 @@
         {% if detail.change_orders %}
         <div class="card">
             <div class="card-header">Change Orders</div>
-            <div style="padding:0;">
+            <div class="co-list">
                 {% for co in detail.change_orders %}
-                <div style="padding:14px 18px; {% if not loop.last %}border-bottom:1px solid #F2F2F7;{% endif %}">
-                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
-                        <span style="font-size:13px; font-weight:600; color:#1D1D1F;">CO #{{ co.id }}</span>
-                        <div style="display:flex; align-items:center; gap:8px;">
-                            <span style="font-size:11px; color:#8E8E93;">{{ co.created_at }}</span>
+                <div class="co-item">
+                    <div class="co-header">
+                        <span class="co-title">CO #{{ co.id }}</span>
+                        <div class="co-meta">
+                            <span class="co-timestamp">{{ co.created_at }}</span>
                             {% if co.status == 'Resolved' %}
-                                <span style="font-size:11px; font-weight:600; background:#E8F5E9; color:#2E7D32; padding:2px 8px; border-radius:8px;">Resolved</span>
+                                <span class="co-badge co-badge-resolved">Resolved</span>
                             {% else %}
-                                <span style="font-size:11px; font-weight:600; background:#FFF3E0; color:#E65100; padding:2px 8px; border-radius:8px;">{{ co.status }}</span>
+                                <span class="co-badge co-badge-open">{{ co.status }}</span>
                             {% endif %}
                         </div>
                     </div>
                     {% if co.swap_groups %}
                         {% for grp in co.swap_groups %}
-                        <div style="margin-bottom:{% if not loop.last %}12px{% else %}0{% endif %};">
-                            <div style="font-size:11px; font-weight:600; color:#6E6E73; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">
+                        <div class="swap-group">
+                            <div class="swap-label">
                                 Swap {{ loop.index }}
-                                {% if grp.timestamp %}<span style="font-weight:400; text-transform:none; letter-spacing:0;">— {{ grp.timestamp }}</span>{% endif %}
+                                {% if grp.timestamp %}<span class="swap-timestamp">— {{ grp.timestamp }}</span>{% endif %}
                             </div>
-                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
-                                <div style="background:#FFF5F5; border:1px solid #FFCDD2; border-radius:8px; padding:8px 10px;">
-                                    <div style="font-size:10px; font-weight:700; color:#C62828; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:5px;">Removed</div>
+                            <div class="swap-grid">
+                                <div class="swap-removed">
+                                    <div class="swap-removed-header">Removed</div>
                                     {% for ch in grp.changes if ch.action == 'removed' %}
-                                    <div style="font-size:12px; color:#3A3A3C; margin-bottom:3px;">
-                                        <span style="font-family:monospace; font-weight:600;">{{ ch.serial_number or '—' }}</span>
-                                        <div style="font-size:11px; color:#6E6E73;">{{ ch.design_name }}{% if ch.size %} · {{ ch.size }}{% endif %}{% if ch.finish %} · {{ ch.finish }}{% endif %}{% if ch.swing %} · {{ ch.swing }}{% endif %}{% if ch.glass_type %} · {{ ch.glass_type }}{% endif %}</div>
+                                    <div class="swap-unit">
+                                        <span class="swap-unit-serial">{{ ch.serial_number or '—' }}</span>
+                                        <div class="swap-unit-spec">{{ ch.design_name }}{% if ch.size %} · {{ ch.size }}{% endif %}{% if ch.finish %} · {{ ch.finish }}{% endif %}{% if ch.swing %} · {{ ch.swing }}{% endif %}{% if ch.glass_type %} · {{ ch.glass_type }}{% endif %}</div>
                                     </div>
-                                    {% else %}<div style="font-size:11px; color:#AEAEB2;">—</div>{% endfor %}
+                                    {% else %}<span class="swap-empty">—</span>{% endfor %}
                                 </div>
-                                <div style="background:#F1F8E9; border:1px solid #C5E1A5; border-radius:8px; padding:8px 10px;">
-                                    <div style="font-size:10px; font-weight:700; color:#2E7D32; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:5px;">Added</div>
+                                <div class="swap-added">
+                                    <div class="swap-added-header">Added</div>
                                     {% for ch in grp.changes if ch.action == 'added' %}
-                                    <div style="font-size:12px; color:#3A3A3C; margin-bottom:3px;">
-                                        <span style="font-family:monospace; font-weight:600;">{{ ch.serial_number or '—' }}</span>
-                                        <div style="font-size:11px; color:#6E6E73;">{{ ch.design_name }}{% if ch.size %} · {{ ch.size }}{% endif %}{% if ch.finish %} · {{ ch.finish }}{% endif %}{% if ch.swing %} · {{ ch.swing }}{% endif %}{% if ch.glass_type %} · {{ ch.glass_type }}{% endif %}</div>
+                                    <div class="swap-unit">
+                                        <span class="swap-unit-serial">{{ ch.serial_number or '—' }}</span>
+                                        <div class="swap-unit-spec">{{ ch.design_name }}{% if ch.size %} · {{ ch.size }}{% endif %}{% if ch.finish %} · {{ ch.finish }}{% endif %}{% if ch.swing %} · {{ ch.swing }}{% endif %}{% if ch.glass_type %} · {{ ch.glass_type }}{% endif %}</div>
                                     </div>
-                                    {% else %}<div style="font-size:11px; color:#AEAEB2;">—</div>{% endfor %}
+                                    {% else %}<span class="swap-empty">—</span>{% endfor %}
                                 </div>
                             </div>
                         </div>
                         {% endfor %}
                     {% else %}
-                        <div style="font-size:12px; color:#AEAEB2;">No unit changes logged.</div>
+                        <div class="co-no-changes">No unit changes logged.</div>
                     {% endif %}
                 </div>
                 {% endfor %}
@@ -749,7 +246,7 @@
         {% endif %}
     </div>
 
-    <!-- Right: Customer Contact + Photos + Activity Log -->
+    <!-- Right: Customer Contact + Photos + Activity -->
     <div>
         <div class="card">
             <div class="card-header">Customer Contact</div>
@@ -787,7 +284,7 @@
                             <input type="text" name="zip" value="{{ detail.order_info.get('zip','') }}">
                         </div>
                     </div>
-                    <div class="form-group" style="margin-bottom:14px;">
+                    <div class="form-group mb">
                         <label>Notes</label>
                         <textarea name="notes">{{ detail.order_info.get('notes','') }}</textarea>
                     </div>
@@ -800,25 +297,39 @@
             <div class="card-header">Photos</div>
             <div class="card-body">
                 {% if detail.photos %}
+                {% set op_srcs = [] %}
+                {% set op_caps = [] %}
+                {% for photo in detail.photos %}
+                    {% set _ = op_srcs.append('/static/uploads/orders/' ~ order_number ~ '/' ~ photo.filename) %}
+                    {% set _ = op_caps.append(photo.caption or '') %}
+                {% endfor %}
                 <div class="photos-grid">
                     {% for photo in detail.photos %}
                     <div class="photo-item">
-                        <a href="{{ url_for('static', filename='uploads/orders/' ~ order_number ~ '/' ~ photo.filename) }}" target="_blank">
-                            <img src="{{ url_for('static', filename='uploads/orders/' ~ order_number ~ '/' ~ photo.filename) }}" alt="{{ photo.caption or photo.filename }}">
-                        </a>
+                        <img src="{{ url_for('static', filename='uploads/orders/' ~ order_number ~ '/' ~ photo.filename) }}"
+                             alt="{{ photo.caption or photo.filename }}"
+                             onclick='openLightbox({{ op_srcs | tojson }}, {{ op_caps | tojson }}, {{ loop.index0 }})'>
                         {% if photo.caption %}
                         <div class="photo-caption" title="{{ photo.caption }}">{{ photo.caption }}</div>
                         {% endif %}
-                        <form method="POST" action="{{ url_for('pipeline_delete_photo', photo_id=photo.id) }}" style="display:inline;">
+                        <form method="POST" action="{{ url_for('pipeline_delete_photo', photo_id=photo.id) }}" class="photo-delete-form-inline">
                             <button type="submit" class="photo-delete" title="Delete" onclick="return confirm('Delete this photo?')">×</button>
                         </form>
                     </div>
                     {% endfor %}
                 </div>
                 {% endif %}
-                <form method="POST" action="{{ url_for('pipeline_upload_photo', order_number=order_number) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ url_for('pipeline_upload_photo', order_number=order_number) }}" enctype="multipart/form-data" id="orderPhotoForm">
+                    <div class="order-drop-zone" id="orderDropZone" onclick="document.getElementById('orderPhotoInput').click()">
+                        <svg class="drop-zone-icon-sm" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#8E8E93" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/>
+                        </svg>
+                        <p class="drop-zone-text-sm" id="orderDropText">Drag & drop or click to select</p>
+                        <p class="drop-zone-hint-sm">JPG, PNG, or WebP</p>
+                        <input type="file" id="orderPhotoInput" name="photo" accept="image/*" required style="display:none;" onchange="updateOrderPhotoLabel(this)">
+                        <p id="orderPhotoLabel" class="drop-zone-filename-blue"></p>
+                    </div>
                     <div class="upload-row">
-                        <input type="file" name="photo" accept="image/*" required>
                         <input type="text" name="caption" placeholder="Caption (optional)">
                         <button type="submit" class="btn-upload">Upload</button>
                     </div>
@@ -829,30 +340,28 @@
         <div class="card">
             <div class="card-header">Activity Log</div>
             {% if detail.activity %}
-            <div style="padding:0;">
+            <div class="activity-list">
                 {% for entry in detail.activity %}
-                <div style="display:flex; gap:12px; padding:11px 18px; {% if not loop.last %}border-bottom:1px solid #F2F2F7;{% endif %} align-items:flex-start;">
-                    <div style="flex:0 0 30px; width:30px; height:30px; border-radius:50%; background:#E3F2FD; color:#1565C0; font-size:12px; font-weight:700; display:flex; align-items:center; justify-content:center; margin-top:1px;">
-                        {{ (entry.full_name or entry.username or '?')[0].upper() }}
-                    </div>
-                    <div style="flex:1; min-width:0;">
-                        <div style="display:flex; align-items:baseline; gap:6px; flex-wrap:wrap;">
-                            <span style="font-size:13px; font-weight:600; color:#1D1D1F;">{{ entry.full_name or entry.username }}</span>
-                            <span style="font-size:12px; color:#3A3A3C;">{{ entry.action }}</span>
+                <div class="activity-item">
+                    <div class="activity-avatar">{{ (entry.full_name or entry.username or '?')[0].upper() }}</div>
+                    <div class="activity-body">
+                        <div class="activity-header">
+                            <span class="activity-name">{{ entry.full_name or entry.username }}</span>
+                            <span class="activity-action">{{ entry.action }}</span>
                         </div>
                         {% if entry.detail %}
-                        <div style="font-size:12px; color:#6E6E73; margin-top:2px; font-family:'SF Mono','Menlo',monospace;">{{ entry.detail }}</div>
+                        <div class="activity-detail">{{ entry.detail }}</div>
                         {% endif %}
                         {% if entry.serial_number and entry.serial_number not in (entry.detail or '') %}
-                        <div style="font-size:11px; color:#AEAEB2; margin-top:2px;">Serial: {{ entry.serial_number }}</div>
+                        <div class="activity-serial">Serial: {{ entry.serial_number }}</div>
                         {% endif %}
                     </div>
-                    <div style="flex:0 0 auto; font-size:11px; color:#AEAEB2; white-space:nowrap; margin-top:2px;">{{ entry.created_at }}</div>
+                    <div class="activity-time">{{ entry.created_at }}</div>
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <div style="padding:20px 18px; font-size:12px; color:#AEAEB2;">No activity recorded for this order.</div>
+            <div class="activity-empty">No activity recorded for this order.</div>
             {% endif %}
         </div>
     </div>
@@ -864,8 +373,33 @@
 function toggleChecklist(id, btn) {
     const panel = document.getElementById(id);
     const isOpen = panel.classList.toggle('open');
-    const arrow = btn.querySelector('svg');
-    arrow.style.transform = isOpen ? 'rotate(180deg)' : '';
+    btn.querySelector('svg').style.transform = isOpen ? 'rotate(180deg)' : '';
 }
+
+function updateOrderPhotoLabel(input) {
+    const label = document.getElementById('orderPhotoLabel');
+    const text  = document.getElementById('orderDropText');
+    if (input.files.length) {
+        label.textContent = input.files[0].name;
+        label.style.display = 'block';
+        text.textContent = 'File selected';
+    }
+}
+
+(function () {
+    const zone  = document.getElementById('orderDropZone');
+    const input = document.getElementById('orderPhotoInput');
+    if (!zone) return;
+    zone.addEventListener('dragover',  e => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', e => {
+        e.preventDefault();
+        zone.classList.remove('drag-over');
+        if (e.dataTransfer.files.length) {
+            input.files = e.dataTransfer.files;
+            updateOrderPhotoLabel(input);
+        }
+    });
+})();
 </script>
 {% endblock %}

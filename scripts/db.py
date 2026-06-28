@@ -6,6 +6,7 @@ All scripts import from here instead of using openpyxl directly.
 
 import sqlite3
 import os
+from datetime import datetime
 
 from constants import DB_PATH
 
@@ -216,7 +217,6 @@ def init_db():
 # ── Activity log ──────────────────────────────────────────────────────────────
 
 def log_activity(conn, username, full_name, action, detail=None, order_number=None, serial_number=None, warehouse_id=None):
-    from datetime import datetime
     conn.execute(
         "INSERT INTO activity_log (username, full_name, action, detail, order_number, serial_number, warehouse_id, created_at) VALUES (?,?,?,?,?,?,?,?)",
         (username, full_name, action, detail, order_number, serial_number, warehouse_id, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
@@ -285,7 +285,7 @@ def ensure_checklist(conn, warehouse_id):
 
 
 def toggle_checklist_item(conn, warehouse_id, item_key, completed, username):
-    now = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     conn.execute("""
         UPDATE warehouse_checklist
         SET completed=?, completed_at=?, completed_by=?
@@ -301,7 +301,7 @@ def save_warehouse_notes(conn, warehouse_id, notes):
 
 
 def add_warehouse_photo(conn, warehouse_id, filename, caption, username):
-    now = __import__("datetime").datetime.now().strftime("%Y-%m-%d %H:%M")
+    now = datetime.now().strftime("%Y-%m-%d %H:%M")
     conn.execute(
         "INSERT INTO warehouse_photos (warehouse_id, filename, caption, uploaded_at, uploaded_by) VALUES (?,?,?,?,?)",
         (warehouse_id, filename, caption, now, username),
@@ -392,6 +392,8 @@ def get_order_prep_summary(conn, order_number):
     return units, progress, total_items, photos
 
 
+# ── Variants ──────────────────────────────────────────────────────────────────
+
 def get_or_create_variant(conn, design, size, finish, swing, glass, sku):
     """Return variant id. Inserts row if the variant does not exist yet."""
     row = conn.execute(
@@ -416,6 +418,8 @@ def get_variant_id(conn, design, size, finish, swing, glass):
     ).fetchone()
     return row["id"] if row else None
 
+
+# ── Units ─────────────────────────────────────────────────────────────────────
 
 def add_unit(conn, variant_id, serial, status, container_id=None):
     """Insert a unit row and commit."""
@@ -483,6 +487,8 @@ def get_units_summary(conn):
     """).fetchall()
     return rows
 
+
+# ── Sales orders ──────────────────────────────────────────────────────────────
 
 def add_sales_order(conn, order_number, customer, variant_id, serial, container_id):
     """Insert a sales_order row and commit."""
@@ -693,6 +699,8 @@ def change_order_unit(conn, order_number, old_serial, new_unit_id, source="sales
     conn.commit()
 
 
+# ── Inventory queries ─────────────────────────────────────────────────────────
+
 def get_warehouse_grouped(conn):
     """Return (order_summaries, unit_rows) for the warehouse page."""
     summaries = conn.execute("""
@@ -883,6 +891,8 @@ def delete_production_units(conn):
     conn.commit()
 
 
+# ── Order mutations ───────────────────────────────────────────────────────────
+
 def remove_unit_from_order(conn, order_number, serial, source):
     """Remove a single unit from an order and restore it to inventory."""
     if source == 'warehouse':
@@ -963,7 +973,6 @@ def add_unit_to_order(conn, order_number, customer, new_unit_id, source):
 
 def log_cr_unit_change(conn, cr_id, action, unit_info, swap_ts=None):
     """Log a unit added/removed event on a change request."""
-    from datetime import datetime
     ts = swap_ts or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     conn.execute("""
         INSERT INTO change_request_units
@@ -1015,7 +1024,6 @@ def get_presale_pending_orders(conn):
 
 def create_change_request(conn, order_number, customer, order_type, scenario_id,
                           request_detail, notes, created_by):
-    from datetime import datetime
     now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     cur = conn.execute(
         """INSERT INTO change_requests
@@ -1056,7 +1064,6 @@ def get_warehouse_change_requests(conn):
 
 
 def ack_warehouse_change_request(conn, cr_id, username):
-    from datetime import datetime
     conn.execute(
         "UPDATE change_requests SET warehouse_ack=1, warehouse_ack_by=?, warehouse_ack_at=? WHERE id=?",
         (username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), cr_id),
@@ -1092,7 +1099,6 @@ def get_units_on_order(conn, order_number):
 
 
 def update_change_request(conn, cr_id, status, resolution, notes):
-    from datetime import datetime
     conn.execute(
         """UPDATE change_requests
            SET status=?, resolution=?, notes=?, updated_at=?
@@ -1406,6 +1412,8 @@ def get_pipeline_order_detail(conn, order_number):
         'first_wh_id': first_wh_id,
     }
 
+
+# ── Order details & photos ────────────────────────────────────────────────────
 
 def upsert_order_details(conn, order_number, phone, email, address, city, state, zip_, notes):
     conn.execute(

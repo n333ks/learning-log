@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Flask web application for iron doors inventory management.
+Flask web application for inventory management.
 Run with: python3 app.py
 """
 
@@ -100,29 +100,24 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
+def _session_user():
+    """Return (username, full_name) from the current session."""
+    username = session.get('username', 'unknown')
+    return username, session.get('full_name', username)
+
+
+def _save_photo(file, dest_dir):
+    """Validate, save, and return the timestamped filename. Returns None if invalid."""
+    if not file or not allowed_file(file.filename):
+        return None
+    os.makedirs(dest_dir, exist_ok=True)
+    ts = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    filename = f"{ts}_{secure_filename(file.filename)}"
+    file.save(os.path.join(dest_dir, filename))
+    return filename
+
+
 # ── Helpers ────────────────────────────────────────────────────────────────────
-
-def get_sales_rows(conn):
-    return conn.execute("""
-        SELECT id, order_number, customer, design_name, size, finish,
-               swing, glass_type, sku, serial_number, container_id,
-               date_allocated, status, source
-        FROM (
-            SELECT so.id, so.order_number, so.customer, v.design_name, v.size, v.finish,
-                   v.swing, v.glass_type, v.sku, so.serial_number, so.container_id,
-                   so.date_allocated, so.status, 'sales' AS source
-            FROM sales_orders so
-            JOIN variants v ON v.id = so.variant_id
-            UNION ALL
-            SELECT wh.id, wh.order_number, wh.customer, v.design_name, v.size, v.finish,
-                   v.swing, v.glass_type, v.sku, wh.serial_number, wh.container_id,
-                   wh.date_arrived AS date_allocated, wh.status, 'warehouse' AS source
-            FROM warehouse wh
-            JOIN variants v ON v.id = wh.variant_id
-        )
-        ORDER BY order_number, id
-    """).fetchall()
-
 
 def get_warehouse_rows(conn):
     return conn.execute("""
@@ -351,8 +346,7 @@ def warehouse_prep(wh_id):
 def warehouse_prep_check(wh_id):
     item_key  = request.form.get('item_key')
     completed = request.form.get('completed') == '1'
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     toggle_checklist_item(conn, wh_id, item_key, completed, username)
     unit = conn.execute("SELECT order_number, serial_number FROM warehouse WHERE id=?", (wh_id,)).fetchone()
@@ -370,8 +364,7 @@ def warehouse_prep_check(wh_id):
 @login_required
 def warehouse_prep_notes(wh_id):
     notes    = request.form.get('notes', '')
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     save_warehouse_notes(conn, wh_id, notes)
     unit = conn.execute("SELECT order_number, serial_number FROM warehouse WHERE id=?", (wh_id,)).fetchone()
@@ -386,17 +379,12 @@ def warehouse_prep_notes(wh_id):
 @app.route('/warehouse/prep/<int:wh_id>/photo', methods=['POST'])
 @login_required
 def warehouse_prep_photo(wh_id):
-    file    = request.files.get('photo')
-    caption = request.form.get('caption', '')
-    if not file or not allowed_file(file.filename):
+    caption  = request.form.get('caption', '')
+    filename = _save_photo(request.files.get('photo'), os.path.join(UPLOAD_DIR, str(wh_id)))
+    if not filename:
         flash('Please upload a JPG, PNG, or WebP image.', 'error')
         return redirect(url_for('warehouse_prep', wh_id=wh_id))
-    unit_dir = os.path.join(UPLOAD_DIR, str(wh_id))
-    os.makedirs(unit_dir, exist_ok=True)
-    filename = secure_filename(f"{datetime.datetime.now().strftime('%Y%m%d%H%M%S')}_{file.filename}")
-    file.save(os.path.join(unit_dir, filename))
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     add_warehouse_photo(conn, wh_id, filename, caption, username)
     unit = conn.execute("SELECT order_number, serial_number FROM warehouse WHERE id=?", (wh_id,)).fetchone()
@@ -412,8 +400,7 @@ def warehouse_prep_photo(wh_id):
 @app.route('/warehouse/prep/<int:wh_id>/photo/<int:photo_id>/delete', methods=['POST'])
 @admin_required
 def warehouse_photo_delete(wh_id, photo_id):
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     unit = conn.execute("SELECT order_number, serial_number FROM warehouse WHERE id=?", (wh_id,)).fetchone()
     filename, _ = delete_warehouse_photo(conn, photo_id)
@@ -432,8 +419,7 @@ def warehouse_photo_delete(wh_id, photo_id):
 @app.route('/warehouse/prep/<int:wh_id>/ready', methods=['POST'])
 @login_required
 def warehouse_prep_ready(wh_id):
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     mark_warehouse_ready(conn, wh_id)
     unit = conn.execute("SELECT order_number, serial_number FROM warehouse WHERE id=?", (wh_id,)).fetchone()
@@ -449,8 +435,7 @@ def warehouse_prep_ready(wh_id):
 @app.route('/warehouse/order/<order_number>/approve', methods=['POST'])
 @login_required
 def warehouse_order_approve(order_number):
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     approve_warehouse_order(conn, order_number)
     log_activity(conn, username, full_name, 'Approved order', order_number=order_number)
@@ -462,8 +447,7 @@ def warehouse_order_approve(order_number):
 @app.route('/warehouse/order/<order_number>/reject', methods=['POST'])
 @login_required
 def warehouse_order_reject(order_number):
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     reject_warehouse_order(conn, order_number)
     log_activity(conn, username, full_name, 'Pushed back order (returned to In Prep)', order_number=order_number)
@@ -1252,8 +1236,7 @@ def change_request_update(cr_id):
 @app.route('/change-requests/<int:cr_id>/warehouse-ack', methods=['POST'])
 @login_required
 def change_request_warehouse_ack(cr_id):
-    username  = session.get('username', 'unknown')
-    full_name = session.get('full_name', username)
+    username, full_name = _session_user()
     conn = get_conn()
     cr   = get_change_request(conn, cr_id)
     ack_warehouse_change_request(conn, cr_id, username)
@@ -1325,20 +1308,12 @@ def pipeline_update_details(order_number):
 @app.route('/pipeline/<order_number>/photos', methods=['POST'])
 @admin_required
 def pipeline_upload_photo(order_number):
-    f = request.files.get('photo')
-    if not f or f.filename == '':
-        flash('No file selected.', 'error')
+    caption  = request.form.get('caption', '')
+    filename = _save_photo(request.files.get('photo'), os.path.join(ORDER_UPLOAD_DIR, order_number))
+    if not filename:
+        flash('Please upload a JPG, PNG, or WebP image.', 'error')
         return redirect(url_for('pipeline_detail', order_number=order_number))
-    ext = f.filename.rsplit('.', 1)[-1].lower() if '.' in f.filename else ''
-    if ext not in ALLOWED_EXTENSIONS:
-        flash('File type not allowed.', 'error')
-        return redirect(url_for('pipeline_detail', order_number=order_number))
-    order_dir = os.path.join(ORDER_UPLOAD_DIR, order_number)
-    os.makedirs(order_dir, exist_ok=True)
-    ts = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
-    filename = f"{ts}_{secure_filename(f.filename)}"
-    f.save(os.path.join(order_dir, filename))
-    caption = request.form.get('caption', '')
+
     conn = get_conn()
     add_order_photo(conn, order_number, filename, caption, session.get('username'))
     conn.close()

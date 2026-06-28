@@ -151,5 +151,53 @@
 </main>
 
 <script src="{{ url_for('static', filename='app.js') }}"></script>
+
+<!-- ── Global Lightbox ──────────────────────────────────────────────────────── -->
+<div id="lb" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:9000; align-items:center; justify-content:center; flex-direction:column;">
+    <button onclick="lbClose()" style="position:fixed; top:18px; right:22px; background:none; border:none; color:#fff; font-size:32px; cursor:pointer; line-height:1; z-index:9001;">&times;</button>
+    <button id="lbPrev" onclick="lbStep(-1)" style="position:fixed; left:24px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); border:none; border-radius:50%; width:48px; height:48px; color:#fff; font-size:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; z-index:9001;" onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">&#8249;</button>
+    <button id="lbNext" onclick="lbStep(1)"  style="position:fixed; right:24px; top:50%; transform:translateY(-50%); background:rgba(255,255,255,0.15); border:none; border-radius:50%; width:48px; height:48px; color:#fff; font-size:28px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.15s; z-index:9001;" onmouseover="this.style.background='rgba(255,255,255,0.32)'" onmouseout="this.style.background='rgba(255,255,255,0.15)'">&#8250;</button>
+    <img id="lbImg" src="" style="max-width:82vw; max-height:84vh; border-radius:8px; object-fit:contain; display:block;">
+    <p id="lbCaption" style="color:#ccc; font-size:13px; margin:10px 0 0; max-width:80vw; text-align:center;"></p>
+    <p id="lbCounter" style="color:#888; font-size:11px; margin:4px 0 0;"></p>
+</div>
+<script>
+(function(){
+    let _srcs = [], _caps = [], _idx = 0;
+    function show() {
+        document.getElementById('lbImg').src = _srcs[_idx];
+        document.getElementById('lbCaption').textContent = _caps[_idx] || '';
+        document.getElementById('lbCounter').textContent = _srcs.length > 1 ? (_idx+1) + ' / ' + _srcs.length : '';
+        document.getElementById('lbPrev').style.display = _srcs.length > 1 ? '' : 'none';
+        document.getElementById('lbNext').style.display = _srcs.length > 1 ? '' : 'none';
+    }
+    window.openLightbox = function(srcs, caps, idx) {
+        _srcs = Array.isArray(srcs) ? srcs : [srcs];
+        _caps = Array.isArray(caps) ? caps : (caps ? [caps] : []);
+        _idx  = idx || 0;
+        document.getElementById('lb').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+        show();
+    };
+    window.lbStep = function(dir) {
+        _idx = (_idx + dir + _srcs.length) % _srcs.length;
+        show();
+    };
+    window.lbClose = function() {
+        document.getElementById('lb').style.display = 'none';
+        document.body.style.overflow = '';
+    };
+    document.getElementById('lb').addEventListener('click', function(e) {
+        if (e.target === this) lbClose();
+    });
+    document.addEventListener('keydown', function(e) {
+        const lb = document.getElementById('lb');
+        if (lb.style.display === 'none') return;
+        if (e.key === 'Escape') lbClose();
+        if (e.key === 'ArrowLeft')  lbStep(-1);
+        if (e.key === 'ArrowRight') lbStep(1);
+    });
+})();
+</script>
 </body>
 </html>
